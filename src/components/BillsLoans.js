@@ -39,49 +39,118 @@ const BillsLoans = ({ spending }) => {
     status: "unpaid",
   });
 
-  // Load bills and loans from localStorage
-  const [bills, setBills] = useState(() => {
+  // Single source of truth for all items
+  const [items, setItems] = useState(() => {
     const saved = localStorage.getItem("billsLoans");
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Save to localStorage whenever bills change
+  // Save to localStorage whenever items change
   useEffect(() => {
-    localStorage.setItem("billsLoans", JSON.stringify(bills));
-  }, [bills]);
+    localStorage.setItem("billsLoans", JSON.stringify(items));
+  }, [items]);
+
+  // Filter items by type
+  const recurringBills = items.filter((item) => item.type === "bill");
+  console.log("Recurring Bills:", recurringBills);
+  const loans = items.filter((item) => item.type === "loan");
 
   // Filter spending to find payments for bills/loans
-  const findMatchingPayments = (itemId) => {
+  const findMatchingPayments = (item) => {
+    if (!spending || !item) return [];
+
     return spending.filter(
-      (item) =>
-        item.description
-          ?.toLowerCase()
-          .includes(bills.find((b) => b.id === itemId)?.name?.toLowerCase()) ||
-        item.category === "Bills" ||
-        item.category === "Loan Payment",
+      (spent) =>
+        spent.description?.toLowerCase().includes(item.name?.toLowerCase()) ||
+        spent.category === "Bills" ||
+        spent.category === "Loan Payment" ||
+        (item.category && spent.category === item.category),
     );
   };
 
-  // Check if a bill/loan has been paid this month
-  const checkIfPaidThisMonth = (item) => {
+  const checkIfPaid = (item) => {
+    if (!item) return false;
+
+    if (item.status === "unpaid") {
+      return false;
+    }
+
+    if (item.status === "paid") {
+      if (item.lastPaid) {
+        const lastPaidDate = new Date(item.lastPaid);
+        const currentDate = new Date();
+        const isSameMonth =
+          lastPaidDate.getMonth() === currentDate.getMonth() &&
+          lastPaidDate.getFullYear() === currentDate.getFullYear();
+
+        return isSameMonth;
+      }
+
+      return true;
+    }
+
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    const matchingPayments = findMatchingPayments(item.id);
+    const matchingPayments = findMatchingPayments(item);
 
-    return matchingPayments.some((payment) => {
+    const isPaidFromSpending = matchingPayments.some((payment) => {
+      if (!payment || !payment.date) return false;
+
       const paymentDate = new Date(payment.date);
-      return (
+      const isSameMonth =
         paymentDate.getMonth() === currentMonth &&
-        paymentDate.getFullYear() === currentYear &&
-        payment.amount >= item.amount
+        paymentDate.getFullYear() === currentYear;
+
+      // Check if payment amount covers the bill/loan
+      const amountPaid = payment.amount >= (item.amount || 0);
+
+      console.log(
+        `${item.name}: Payment ${payment.description} - amount: ${payment.amount}, isSameMonth: ${isSameMonth}, amountPaid: ${amountPaid}`,
       );
+      return isSameMonth && amountPaid;
     });
+
+    return isPaidFromSpending;
   };
 
-  // Filter bills and loans
-  const recurringBills = bills.filter((item) => item.type === "bill");
-  const loans = bills.filter((item) => item.type === "loan");
+  // Improved Mark as Paid function
+  const handleMarkAsPaid = (id) => {
+    console.log(`Marking item ${id} as paid`);
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = {
+            ...item,
+            status: "paid",
+            lastPaid: new Date().toISOString(),
+          };
+
+          return updatedItem;
+        }
+        return item;
+      }),
+    );
+  };
+
+  // Improved Mark as Unpaid function
+  const handleMarkAsUnpaid = (id) => {
+    console.log(`Marking item ${id} as unpaid`);
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = {
+            ...item,
+            status: "unpaid",
+            lastPaid: null,
+          };
+
+          return updatedItem;
+        }
+        return item;
+      }),
+    );
+  };
 
   // Handle form changes
   const handleFormChange = (e) => {
@@ -98,10 +167,11 @@ const BillsLoans = ({ spending }) => {
 
     if (editMode) {
       // Update existing item
-      const updatedBills = bills.map((item) =>
-        item.id === editingId ? { ...formData, id: editingId } : item,
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === editingId ? { ...formData, id: editingId } : item,
+        ),
       );
-      setBills(updatedBills);
     } else {
       // Add new item
       const newItem = {
@@ -109,7 +179,7 @@ const BillsLoans = ({ spending }) => {
         id: Date.now(),
         createdAt: new Date().toISOString(),
       };
-      setBills([...bills, newItem]);
+      setItems((prevItems) => [...prevItems, newItem]);
     }
 
     // Reset form and close modal
@@ -143,24 +213,13 @@ const BillsLoans = ({ spending }) => {
   // Delete item
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      setBills(bills.filter((item) => item.id !== id));
+      setItems((prevItems) => prevItems.filter((item) => item.id !== id));
     }
-  };
-
-  // Mark as paid
-  const handleMarkAsPaid = (id) => {
-    setBills(
-      bills.map((item) =>
-        item.id === id
-          ? { ...item, status: "paid", lastPaid: new Date().toISOString() }
-          : item,
-      ),
-    );
   };
 
   // Get status badge
   const getStatusBadge = (item) => {
-    const isPaid = checkIfPaidThisMonth(item) || item.status === "paid";
+    const isPaid = checkIfPaid(item);
 
     if (isPaid) {
       return (
@@ -186,10 +245,23 @@ const BillsLoans = ({ spending }) => {
     (sum, loan) => sum + parseFloat(loan.amount || 0),
     0,
   );
-  const unpaidBills = recurringBills.filter(
-    (bill) => !checkIfPaidThisMonth(bill),
-  );
-  const unpaidLoans = loans.filter((loan) => !checkIfPaidThisMonth(loan));
+
+  const unpaidBills = recurringBills.filter((bill) => !checkIfPaid(bill));
+  const unpaidLoans = loans.filter((loan) => !checkIfPaid(loan));
+
+  // Get items due in next 7 days
+  const getUpcomingItems = () => {
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    return items.filter((item) => {
+      const dueDate = new Date(item.dueDate);
+      return dueDate >= today && dueDate <= nextWeek && !checkIfPaid(item);
+    });
+  };
+
+  const upcomingItems = getUpcomingItems();
 
   return (
     <>
@@ -214,6 +286,15 @@ const BillsLoans = ({ spending }) => {
         </Col>
       </Row>
 
+      {/* Alert for upcoming payments */}
+      {upcomingItems.length > 0 && (
+        <Alert variant="warning" className="mb-4">
+          <FaCheckCircle className="me-2" />
+          <strong>Upcoming Payments:</strong> You have {upcomingItems.length}{" "}
+          bill(s)/loan(s) due in the next 7 days.
+        </Alert>
+      )}
+
       {/* Summary Cards */}
       <Row className="mb-4">
         <Col md={3}>
@@ -222,7 +303,8 @@ const BillsLoans = ({ spending }) => {
               <Card.Title>Total Bills</Card.Title>
               <h3 className="text-primary">£{totalBills.toFixed(2)}</h3>
               <small className="text-muted">
-                {recurringBills.length} bills
+                {recurringBills.length} bill
+                {recurringBills.length !== 1 ? "s" : ""}
               </small>
             </Card.Body>
           </Card>
@@ -232,7 +314,9 @@ const BillsLoans = ({ spending }) => {
             <Card.Body>
               <Card.Title>Total Loans</Card.Title>
               <h3 className="text-warning">£{totalLoans.toFixed(2)}</h3>
-              <small className="text-muted">{loans.length} loans</small>
+              <small className="text-muted">
+                {loans.length} loan{loans.length !== 1 ? "s" : ""}
+              </small>
             </Card.Body>
           </Card>
         </Col>
@@ -241,7 +325,9 @@ const BillsLoans = ({ spending }) => {
             <Card.Body>
               <Card.Title>Unpaid Bills</Card.Title>
               <h3 className="text-danger">{unpaidBills.length}</h3>
-              <small className="text-muted">Need attention</small>
+              <small className="text-muted">
+                {unpaidBills.length === 0 ? "All paid!" : "Need attention"}
+              </small>
             </Card.Body>
           </Card>
         </Col>
@@ -250,7 +336,9 @@ const BillsLoans = ({ spending }) => {
             <Card.Body>
               <Card.Title>Unpaid Loans</Card.Title>
               <h3 className="text-danger">{unpaidLoans.length}</h3>
-              <small className="text-muted">Due this month</small>
+              <small className="text-muted">
+                {unpaidLoans.length === 0 ? "All paid!" : "Due this month"}
+              </small>
             </Card.Body>
           </Card>
         </Col>
@@ -269,96 +357,119 @@ const BillsLoans = ({ spending }) => {
               title={`Recurring Bills (${recurringBills.length})`}
             >
               {recurringBills.length > 0 ? (
-                <Table responsive hover className="mt-3">
-                  <thead>
-                    <tr>
-                      <th>Status</th>
-                      <th>Bill Name</th>
-                      <th>Amount</th>
-                      <th>Due Date</th>
-                      <th>Recurrence</th>
-                      <th>Category</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recurringBills.map((bill) => {
-                      const isPaid = checkIfPaidThisMonth(bill);
-                      return (
-                        <tr
-                          key={bill.id}
-                          className={isPaid ? "table-success" : "table-warning"}
-                        >
-                          <td>{getStatusBadge(bill)}</td>
-                          <td>
-                            <strong>{bill.name}</strong>
-                            {bill.category && (
-                              <div>
-                                <small className="text-muted">
-                                  {bill.category}
-                                </small>
-                              </div>
-                            )}
-                          </td>
-                          <td className="fw-bold">
-                            £{parseFloat(bill.amount).toFixed(2)}
-                          </td>
-                          <td>
-                            {new Date(bill.dueDate).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                              },
-                            )}
-                            {new Date(bill.dueDate).getDate() <
-                              new Date().getDate() &&
-                              !isPaid && (
+                <div className="table-responsive">
+                  <Table hover className="mt-3">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Bill Name</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Recurrence</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recurringBills.map((bill) => {
+                        const isPaid = checkIfPaid(bill);
+
+                        const isOverdue =
+                          !isPaid && new Date(bill.dueDate) < new Date();
+
+                        return (
+                          <tr
+                            key={bill.id}
+                            className={
+                              isPaid
+                                ? "table-success"
+                                : isOverdue
+                                  ? "table-danger"
+                                  : "table-warning"
+                            }
+                          >
+                            <td>{getStatusBadge(bill)}</td>
+                            <td>
+                              <strong>{bill.name}</strong>
+                              {bill.category && (
+                                <div>
+                                  <small className="text-muted">
+                                    {bill.category}
+                                  </small>
+                                </div>
+                              )}
+                            </td>
+                            <td className="fw-bold">
+                              £{parseFloat(bill.amount).toFixed(2)}
+                            </td>
+                            <td>
+                              {new Date(bill.dueDate).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                              {isOverdue && (
                                 <Badge bg="danger" className="ms-2">
                                   Overdue
                                 </Badge>
                               )}
-                          </td>
-                          <td>
-                            <Badge bg="info">{bill.recurrence}</Badge>
-                          </td>
-                          <td>
-                            <Badge bg="secondary">
-                              {bill.category || "General"}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              className="me-2"
-                              onClick={() => handleEdit(bill)}
-                            >
-                              <FaEdit />
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              className="me-2"
-                              onClick={() => handleDelete(bill.id)}
-                            >
-                              <FaTrash />
-                            </Button>
-                            {!isPaid && (
-                              <Button
-                                variant="success"
-                                size="sm"
-                                onClick={() => handleMarkAsPaid(bill.id)}
-                              >
-                                Mark Paid
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
+                            </td>
+                            <td>
+                              <Badge bg="info">{bill.recurrence}</Badge>
+                            </td>
+                            <td>
+                              <Badge bg="secondary">
+                                {bill.category || "General"}
+                              </Badge>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={() => handleEdit(bill)}
+                                  title="Edit"
+                                >
+                                  <FaEdit />
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => handleDelete(bill.id)}
+                                  title="Delete"
+                                >
+                                  <FaTrash />
+                                </Button>
+                                {!isPaid ? (
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => handleMarkAsPaid(bill.id)}
+                                    title="Mark as Paid"
+                                  >
+                                    Mark Paid
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="warning"
+                                    size="sm"
+                                    onClick={() => handleMarkAsUnpaid(bill.id)}
+                                    title="Mark as Unpaid"
+                                  >
+                                    Mark Unpaid
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
               ) : (
                 <Alert variant="info" className="mt-3">
                   No recurring bills added yet. Click "Add New" to add your
@@ -369,85 +480,114 @@ const BillsLoans = ({ spending }) => {
 
             <Tab eventKey="loans" title={`Loans (${loans.length})`}>
               {loans.length > 0 ? (
-                <Table responsive hover className="mt-3">
-                  <thead>
-                    <tr>
-                      <th>Status</th>
-                      <th>Loan Name</th>
-                      <th>Monthly Payment</th>
-                      <th>Due Date</th>
-                      <th>Category</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loans.map((loan) => {
-                      const isPaid = checkIfPaidThisMonth(loan);
-                      return (
-                        <tr
-                          key={loan.id}
-                          className={isPaid ? "table-success" : "table-warning"}
-                        >
-                          <td>{getStatusBadge(loan)}</td>
-                          <td>
-                            <strong>{loan.name}</strong>
-                            {loan.category && (
-                              <div>
-                                <small className="text-muted">
-                                  {loan.category}
-                                </small>
+                <div className="table-responsive">
+                  <Table hover className="mt-3">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Loan Name</th>
+                        <th>Monthly Payment</th>
+                        <th>Due Date</th>
+                        <th>Category</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loans.map((loan) => {
+                        const isPaid = checkIfPaid(loan);
+                        const isOverdue =
+                          !isPaid && new Date(loan.dueDate) < new Date();
+
+                        return (
+                          <tr
+                            key={loan.id}
+                            className={
+                              isPaid
+                                ? "table-success"
+                                : isOverdue
+                                  ? "table-danger"
+                                  : "table-warning"
+                            }
+                          >
+                            <td>{getStatusBadge(loan)}</td>
+                            <td>
+                              <strong>{loan.name}</strong>
+                              {loan.category && (
+                                <div>
+                                  <small className="text-muted">
+                                    {loan.category}
+                                  </small>
+                                </div>
+                              )}
+                            </td>
+                            <td className="fw-bold">
+                              £{parseFloat(loan.amount).toFixed(2)}
+                            </td>
+                            <td>
+                              {new Date(loan.dueDate).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                              {isOverdue && (
+                                <Badge bg="danger" className="ms-2">
+                                  Overdue
+                                </Badge>
+                              )}
+                            </td>
+                            <td>
+                              <Badge bg="secondary">
+                                {loan.category || "Loan"}
+                              </Badge>
+                            </td>
+                            <td>
+                              <div className="d-flex gap-2">
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={() => handleEdit(loan)}
+                                  title="Edit"
+                                >
+                                  <FaEdit />
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => handleDelete(loan.id)}
+                                  title="Delete"
+                                >
+                                  <FaTrash />
+                                </Button>
+                                {!isPaid ? (
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => handleMarkAsPaid(loan.id)}
+                                    title="Mark as Paid"
+                                  >
+                                    Mark Paid
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="warning"
+                                    size="sm"
+                                    onClick={() => handleMarkAsUnpaid(loan.id)}
+                                    title="Mark as Unpaid"
+                                  >
+                                    Mark Unpaid
+                                  </Button>
+                                )}
                               </div>
-                            )}
-                          </td>
-                          <td className="fw-bold">
-                            £{parseFloat(loan.amount).toFixed(2)}
-                          </td>
-                          <td>
-                            {new Date(loan.dueDate).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                              },
-                            )}
-                          </td>
-                          <td>
-                            <Badge bg="secondary">
-                              {loan.category || "Loan"}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              className="me-2"
-                              onClick={() => handleEdit(loan)}
-                            >
-                              <FaEdit />
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              className="me-2"
-                              onClick={() => handleDelete(loan.id)}
-                            >
-                              <FaTrash />
-                            </Button>
-                            {!isPaid && (
-                              <Button
-                                variant="success"
-                                size="sm"
-                                onClick={() => handleMarkAsPaid(loan.id)}
-                              >
-                                Mark Paid
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </Table>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
               ) : (
                 <Alert variant="info" className="mt-3">
                   No loans added yet. Click "Add New" to add your first loan.
@@ -457,46 +597,54 @@ const BillsLoans = ({ spending }) => {
           </Tabs>
 
           {/* Payment Suggestions */}
-          <Card className="mt-4">
-            <Card.Body>
-              <Card.Title>Recent Matching Payments</Card.Title>
-              <p className="text-muted">
-                These are payments from your spending that might match your
-                bills/loans:
-              </p>
-              <ListGroup variant="flush">
-                {spending
-                  .filter(
+          {spending.length > 0 && (
+            <Card className="mt-4">
+              <Card.Body>
+                <Card.Title>Recent Matching Payments</Card.Title>
+                <p className="text-muted">
+                  These are payments from your spending that might match your
+                  bills/loans:
+                </p>
+                <ListGroup variant="flush">
+                  {spending
+                    .filter(
+                      (item) =>
+                        item.category === "Bills" ||
+                        item.category === "Loan Payment",
+                    )
+                    .slice(0, 5)
+                    .map((payment, index) => (
+                      <ListGroup.Item
+                        key={index}
+                        className="d-flex justify-content-between align-items-center"
+                      >
+                        <div>
+                          <strong>{payment.description}</strong>
+                          <br />
+                          <small className="text-muted">
+                            {payment.date} • {payment.category}
+                          </small>
+                        </div>
+                        <div className="text-danger fw-bold">
+                          £{payment.amount.toFixed(2)}
+                        </div>
+                      </ListGroup.Item>
+                    ))}
+                  {spending.filter(
                     (item) =>
                       item.category === "Bills" ||
-                      item.category === "Loan Payment" ||
-                      bills.some((bill) =>
-                        item.description
-                          ?.toLowerCase()
-                          .includes(bill.name?.toLowerCase()),
-                      ),
-                  )
-                  .slice(0, 5)
-                  .map((payment, index) => (
-                    <ListGroup.Item
-                      key={index}
-                      className="d-flex justify-content-between"
-                    >
-                      <div>
-                        <strong>{payment.description}</strong>
-                        <br />
-                        <small className="text-muted">
-                          {payment.date} • {payment.category}
-                        </small>
-                      </div>
-                      <div className="text-danger fw-bold">
-                        £{payment.amount.toFixed(2)}
-                      </div>
+                      item.category === "Loan Payment",
+                  ).length === 0 && (
+                    <ListGroup.Item>
+                      <small className="text-muted">
+                        No matching payments found in your spending history.
+                      </small>
                     </ListGroup.Item>
-                  ))}
-              </ListGroup>
-            </Card.Body>
-          </Card>
+                  )}
+                </ListGroup>
+              </Card.Body>
+            </Card>
+          )}
         </Card.Body>
       </Card>
 
@@ -533,7 +681,7 @@ const BillsLoans = ({ spending }) => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Name</Form.Label>
+                  <Form.Label>Name *</Form.Label>
                   <Form.Control
                     type="text"
                     name="name"
@@ -549,10 +697,11 @@ const BillsLoans = ({ spending }) => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Amount (£)</Form.Label>
+                  <Form.Label>Amount (£) *</Form.Label>
                   <Form.Control
                     type="number"
                     step="0.01"
+                    min="0.01"
                     name="amount"
                     value={formData.amount}
                     onChange={handleFormChange}
@@ -563,7 +712,7 @@ const BillsLoans = ({ spending }) => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Due Date</Form.Label>
+                  <Form.Label>Due Date *</Form.Label>
                   <Form.Control
                     type="date"
                     name="dueDate"
@@ -619,7 +768,7 @@ const BillsLoans = ({ spending }) => {
               </Col>
             </Row>
 
-            <div className="d-grid gap-2">
+            <div className="d-grid gap-2 mt-4">
               <Button variant="primary" type="submit" size="lg">
                 {editMode ? "Update" : "Add"}{" "}
                 {formData.type === "bill" ? "Bill" : "Loan"}

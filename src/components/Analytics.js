@@ -1,6 +1,7 @@
 // components/Analytics.js
 import { useMemo } from "react";
-import { Card, Row, Col, Table, ProgressBar } from "react-bootstrap";
+import { Card, Row, Col, Table, ProgressBar, Button } from "react-bootstrap";
+import { FaPrint } from "react-icons/fa";
 
 const Analytics = ({ spending, monthlyEarning }) => {
   // Calculate category totals
@@ -35,6 +36,81 @@ const Analytics = ({ spending, monthlyEarning }) => {
   const totalSpent = spending.reduce((sum, item) => sum + item.amount, 0);
   const overallPercentage =
     monthlyEarning > 0 ? (totalSpent / monthlyEarning) * 100 : 0;
+
+  const handleSpendingPrint = () => {
+    if (!spending || spending.length === 0) {
+      alert("No spending data to print!");
+      return;
+    }
+    const printContent = `
+      <html>
+        <head>
+          <title>Spending Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; }  
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background-color: #2c3e50; color: white; padding: 12px; text-align: left; justify-content: space-between; }
+            td { padding: 10px; border-bottom: 1px solid #ddd; }
+            .total { font-weight: bold; background-color: #f8f9fa; }
+            .amount { text-align: right; }
+            @media print {
+              @page { margin: 0.5in; }
+              body { margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Spending Report</h1>
+          <p><strong>Report Date:</strong> ${new Date().toLocaleDateString(
+            "en-GB",
+            {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            },
+          )}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>    
+                <th>Category</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${spending
+                .map(
+                  (item) => `
+                  <tr>
+
+                    <td>${item.date}</td>
+                    <td>${item.description}</td>
+                    <td>${item.category}</td>
+                    <td class="amount">£${item.amount.toFixed(2)}</td>
+                  </tr>
+                `,
+                )
+                .join("")}
+            </tbody>
+            <tfoot>
+              <tr class="total">
+                <td colspan="3"><strong>Total Spending</strong></td>
+                <td class="amount">£${totalSpent.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </body>
+      </html>    
+    `;
+    const printWindow = window.open("", "_blank");
+    printWindow.document.open();
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   return (
     <>
@@ -127,6 +203,13 @@ const Analytics = ({ spending, monthlyEarning }) => {
               )}
             </Card.Body>
           </Card>
+          <Button
+            variant="outline-primary mt-1"
+            onClick={handleSpendingPrint}
+            disabled={!spending || spending.length === 0}
+          >
+            <FaPrint className="me-2" /> Print recent spending
+          </Button>
         </Col>
       </Row>
     </>

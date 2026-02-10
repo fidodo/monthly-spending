@@ -1,9 +1,19 @@
 // components/Analytics.js
-import { useMemo } from "react";
-import { Card, Row, Col, Table, ProgressBar, Button } from "react-bootstrap";
-import { FaPrint } from "react-icons/fa";
+import { useMemo, useState } from "react";
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  ProgressBar,
+  Button,
+  Collapse,
+} from "react-bootstrap";
+import { FaPrint, FaChartPie, FaList } from "react-icons/fa";
+import PieChartComponent from "./PieChartComponent";
 
 const Analytics = ({ spending, monthlyEarning }) => {
+  const [showPieChart, setShowPieChart] = useState(false);
   // Calculate category totals
   const categoryTotals = useMemo(() => {
     const totals = {};
@@ -31,6 +41,13 @@ const Analytics = ({ spending, monthlyEarning }) => {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
   }, [categoryTotals]);
+
+  const pieChartData = useMemo(() => {
+    return {
+      labels: topCategories.map(([category]) => category),
+      amounts: topCategories.map(([, amount]) => amount),
+    };
+  }, [topCategories]);
 
   // Calculate total spent
   const totalSpent = spending.reduce((sum, item) => sum + item.amount, 0);
@@ -144,23 +161,64 @@ const Analytics = ({ spending, monthlyEarning }) => {
         <Col md={6}>
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>Top Categories</Card.Title>
-              {topCategories.length > 0 ? (
-                topCategories.map(([category, amount]) => (
-                  <div key={category} className="mb-3">
-                    <div className="d-flex justify-content-between mb-1">
-                      <span>{category}</span>
-                      <span>£{amount.toFixed(2)}</span>
-                    </div>
-                    <ProgressBar
-                      now={categoryPercentages[category] || 0}
-                      variant="info"
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <Card.Title>Top Categories</Card.Title>
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  onClick={() => setShowPieChart(!showPieChart)}
+                  className="d-flex align-items-center gap-2"
+                >
+                  {showPieChart ? (
+                    <>
+                      <FaList /> Show List
+                    </>
+                  ) : (
+                    <>
+                      <FaChartPie /> Show Chart
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <Collapse in={!showPieChart}>
+                <div>
+                  {topCategories.length > 0 ? (
+                    topCategories.map(([category, amount]) => (
+                      <div key={category} className="mb-3">
+                        <div className="d-flex justify-content-between mb-1">
+                          <span className="fw-medium">{category}</span>
+                          <span className="text-primary fw-bold">
+                            £{amount.toFixed(2)}
+                          </span>
+                        </div>
+                        <ProgressBar
+                          now={categoryPercentages[category] || 0}
+                          variant="info"
+                          label={`${(categoryPercentages[category] || 0).toFixed(1)}%`}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted text-center">
+                      No spending data available
+                    </p>
+                  )}
+                </div>
+              </Collapse>
+
+              <Collapse in={showPieChart}>
+                <div>
+                  {topCategories.length > 0 ? (
+                    <PieChartComponent
+                      data={pieChartData.amounts}
+                      labels={pieChartData.labels}
                     />
-                  </div>
-                ))
-              ) : (
-                <p className="theme-text-muted">No spending data available</p>
-              )}
+                  ) : (
+                    <p className="text-muted text-center">No data for chart</p>
+                  )}
+                </div>
+              </Collapse>
             </Card.Body>
           </Card>
         </Col>

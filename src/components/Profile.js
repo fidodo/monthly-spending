@@ -17,7 +17,7 @@ const Profile = ({ user, monthlyEarning }) => {
             />
 
             <h2>{user.name}</h2>
-            <p className="text-muted">{user.email}</p>
+            <p className="theme-text-muted">{user.email}</p>
 
             <hr />
 

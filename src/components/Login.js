@@ -82,7 +82,7 @@ const Login = ({ onLogin }) => {
                   </div>
                 </Alert>
 
-                <p className="text-muted mb-4">
+                <p className="theme-text-muted mb-4">
                   Track your expenses and analyze your spending habits
                 </p>
 
@@ -94,7 +94,7 @@ const Login = ({ onLogin }) => {
                   🚀 Start Demo Mode
                 </Button>
 
-                <div className="mt-4 text-muted small">
+                <div className="mt-4 theme-text-muted small">
                   <p>To enable Google login:</p>
                   <ol className="text-start small">
                     <li>Get client ID from Google Cloud Console</li>
@@ -131,7 +131,7 @@ const Login = ({ onLogin }) => {
                   </Alert>
                 )}
 
-                <p className="text-muted mb-4">
+                <p className="theme-text-muted mb-4">
                   Track your expenses and analyze your spending habits
                 </p>
 
@@ -156,7 +156,7 @@ const Login = ({ onLogin }) => {
                   Try Demo Mode Instead
                 </Button>
 
-                <div className="mt-4 text-muted small">
+                <div className="mt-4 theme-text-muted small">
                   <p>Use "Try Demo Mode" for instant access without Google</p>
                 </div>
               </Card.Body>

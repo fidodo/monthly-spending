@@ -8,6 +8,7 @@ import {
   FaHome,
   FaFileInvoiceDollar,
 } from "react-icons/fa";
+import SimpleThemeSwitcher from "./SimpleThemeSwitcher";
 
 const CustomNavbar = ({ user, onLogout }) => {
   const navigate = useNavigate();
@@ -49,6 +50,10 @@ const CustomNavbar = ({ user, onLogout }) => {
             </Nav.Link>
           </Nav>
           <Nav>
+            <div>
+              {" "}
+              <SimpleThemeSwitcher />
+            </div>
             <Nav.Link
               as={Link}
               to="/profile"

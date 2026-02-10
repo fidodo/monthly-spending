@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
-import SimpleThemeSwitcher from "./components/SimpleThemeSwitcher";
 import Navbar from "./components/Navbar";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
@@ -69,10 +68,7 @@ function App() {
     <Router>
       <div className="App">
         {user && <Navbar user={user} onLogout={handleLogout} />}
-        <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
-          {" "}
-          <SimpleThemeSwitcher />
-        </div>
+
         <Container className="mt-4">
           <Routes>
             <Route

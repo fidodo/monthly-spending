@@ -22,7 +22,7 @@ body.light-theme {
 
 body.dark-theme {
   background-color: #121212;
-  color: #f0f0f0;
+  color: #f0f0f0 !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: auto;
 }
@@ -32,4 +32,25 @@ button {
 }
 button:focus {
   outline: none;
+}
+
+.theme-text-muted {
+  color: #6c757d;
+}
+
+body.dark-theme .theme-text-muted {
+  color: #adb5bd !important;
+}
+
+/* Or use CSS variables */
+:root {
+  --text-muted-color: #6c757d;
+}
+
+body.dark-theme {
+  --text-muted-color: #adb5bd;
+}
+
+.theme-text-muted {
+  color: var(--text-muted-color);
 }

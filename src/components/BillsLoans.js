@@ -268,7 +268,7 @@ const BillsLoans = ({ spending }) => {
       <Row className="mb-4">
         <Col>
           <h2>Bills & Loans Management</h2>
-          <p className="text-muted">
+          <p className="theme-text-muted">
             Track your recurring bills and loan payments
           </p>
         </Col>
@@ -393,7 +393,7 @@ const BillsLoans = ({ spending }) => {
                               <strong>{bill.name}</strong>
                               {bill.category && (
                                 <div>
-                                  <small className="text-muted">
+                                  <small className="theme-text-muted">
                                     {bill.category}
                                   </small>
                                 </div>
@@ -514,7 +514,7 @@ const BillsLoans = ({ spending }) => {
                               <strong>{loan.name}</strong>
                               {loan.category && (
                                 <div>
-                                  <small className="text-muted">
+                                  <small className="theme-text-muted">
                                     {loan.category}
                                   </small>
                                 </div>
@@ -601,7 +601,7 @@ const BillsLoans = ({ spending }) => {
             <Card className="mt-4">
               <Card.Body>
                 <Card.Title>Recent Matching Payments</Card.Title>
-                <p className="text-muted">
+                <p className="theme-text-muted">
                   These are payments from your spending that might match your
                   bills/loans:
                 </p>
@@ -621,7 +621,7 @@ const BillsLoans = ({ spending }) => {
                         <div>
                           <strong>{payment.description}</strong>
                           <br />
-                          <small className="text-muted">
+                          <small className="theme-text-muted">
                             {payment.date} • {payment.category}
                           </small>
                         </div>
@@ -636,7 +636,7 @@ const BillsLoans = ({ spending }) => {
                       item.category === "Loan Payment",
                   ).length === 0 && (
                     <ListGroup.Item>
-                      <small className="text-muted">
+                      <small className="theme-text-muted">
                         No matching payments found in your spending history.
                       </small>
                     </ListGroup.Item>

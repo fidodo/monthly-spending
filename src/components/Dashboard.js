@@ -122,7 +122,7 @@ const Dashboard = ({
       <Row className="mb-4">
         <Col>
           <h2>Monthly Overview</h2>
-          <p className="text-muted">
+          <p className="theme-text-muted">
             Track your spending and stay within budget
           </p>
         </Col>

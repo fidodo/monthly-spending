@@ -117,7 +117,7 @@ const Analytics = ({ spending, monthlyEarning }) => {
       <Row className="mb-4">
         <Col>
           <h2>Spending Analytics</h2>
-          <p className="text-muted">Analyze your spending by category</p>
+          <p className="theme-text-muted">Analyze your spending by category</p>
         </Col>
       </Row>
 
@@ -159,7 +159,7 @@ const Analytics = ({ spending, monthlyEarning }) => {
                   </div>
                 ))
               ) : (
-                <p className="text-muted">No spending data available</p>
+                <p className="theme-text-muted">No spending data available</p>
               )}
             </Card.Body>
           </Card>
@@ -197,7 +197,7 @@ const Analytics = ({ spending, monthlyEarning }) => {
                   </tbody>
                 </Table>
               ) : (
-                <p className="text-muted text-center">
+                <p className="theme-text-muted text-center">
                   No spending records found
                 </p>
               )}

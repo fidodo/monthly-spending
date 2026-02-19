@@ -50,10 +50,13 @@ const Analytics = ({ spending, monthlyEarning }) => {
   }, [topCategories]);
 
   // Calculate total spent
-  const totalSpent = spending.reduce((sum, item) => sum + item.amount, 0);
+  const totalSpent = spending.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0,
+  );
   const overallPercentage =
     monthlyEarning > 0 ? (totalSpent / monthlyEarning) * 100 : 0;
-
+  console.log(monthlyEarning, totalSpent, overallPercentage);
   const handleSpendingPrint = () => {
     if (!spending || spending.length === 0) {
       alert("No spending data to print!");
@@ -144,9 +147,14 @@ const Analytics = ({ spending, monthlyEarning }) => {
             <Card.Body>
               <Card.Title>Overall Spending</Card.Title>
               <div className="text-center mb-3">
-                <h3 className="text-primary">£{totalSpent.toFixed(2)}</h3>
+                <h3 className="text-primary">
+                  £{typeof totalSpent === "number" && totalSpent.toFixed(2)}
+                </h3>
                 <p className="text-muted">
-                  of £{monthlyEarning.toFixed(2)} monthly earning
+                  of £
+                  {typeof monthlyEarning === "number" &&
+                    monthlyEarning.toFixed(2)}{" "}
+                  monthly earning
                 </p>
               </div>
               <ProgressBar
@@ -189,7 +197,7 @@ const Analytics = ({ spending, monthlyEarning }) => {
                         <div className="d-flex justify-content-between mb-1">
                           <span className="fw-medium">{category}</span>
                           <span className="text-primary fw-bold">
-                            £{amount.toFixed(2)}
+                            £{typeof amount === "number" && amount.toFixed(2)}
                           </span>
                         </div>
                         <ProgressBar
@@ -248,7 +256,7 @@ const Analytics = ({ spending, monthlyEarning }) => {
                           <span className="badge bg-info">{item.category}</span>
                         </td>
                         <td className="text-danger">
-                          £{item.amount.toFixed(2)}
+                          £{Number(item.amount).toFixed(2)}
                         </td>
                       </tr>
                     ))}

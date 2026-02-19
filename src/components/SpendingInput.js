@@ -1,8 +1,10 @@
 // components/SpendingInput.js
 import React, { useState } from "react";
 import { Card, Form, Button, Alert, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 const SpendingInput = ({ onAddSpending, monthlyEarning, totalSpent }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     amount: "",
     description: "",
@@ -53,6 +55,7 @@ const SpendingInput = ({ onAddSpending, monthlyEarning, totalSpent }) => {
 
       // Hide success message after 3 seconds
       setTimeout(() => setSubmitted(false), 3000);
+      navigate("/");
     }
   };
 

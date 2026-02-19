@@ -35,7 +35,7 @@ const Dashboard = ({
 
   // Get recent spending (last 5 entries)
   const recentSpending = [...spending].reverse().slice(0, 5);
-  // console.log("Recent Spending:", recentSpending);
+
   const handlePrint = () => {
     if (!recentSpending || recentSpending.length === 0) {
       alert("No spending data to print!");
@@ -140,7 +140,12 @@ const Dashboard = ({
           <Card className="text-center h-100">
             <Card.Body>
               <Card.Title>Monthly Earning</Card.Title>
-              <h2 className="text-primary">£{monthlyEarning.toFixed(2)}</h2>
+              <h2 className="text-primary">
+                £
+                {typeof monthlyEarning === "number"
+                  ? monthlyEarning.toFixed(2)
+                  : "0.00"}
+              </h2>
               <Button
                 variant="outline-primary"
                 size="sm"
@@ -156,12 +161,17 @@ const Dashboard = ({
           <Card className="text-center h-100">
             <Card.Body>
               <Card.Title>Total Spent</Card.Title>
-              <h2 className="text-danger">£{totalSpent.toFixed(2)}</h2>
+              <h2 className="text-danger">
+                £
+                {typeof totalSpent === "number"
+                  ? totalSpent.toFixed(2)
+                  : "0.00"}
+              </h2>
               <div className="mt-3">
                 <ProgressBar
                   now={percentage > 100 ? 100 : percentage}
                   variant={percentage >= 80 ? "warning" : "success"}
-                  label={`${percentage.toFixed(1)}%`}
+                  label={`${typeof percentage === "number" ? percentage.toFixed(1) : "0.0"}%`}
                 />
               </div>
             </Card.Body>
@@ -222,7 +232,7 @@ const Dashboard = ({
                         <small className="text-muted">{item.category}</small>
                       </div>
                       <div className="text-danger">
-                        £{item.amount.toFixed(2)}
+                        £{Number(item.amount).toFixed(2)}
                       </div>
                     </ListGroup.Item>
                   ))}

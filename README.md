@@ -371,7 +371,7 @@ All contributors who have helped with the projec
 Ayokunle Ogunfidodo - [@Linkedin](linkedin.com/in/ayokunle-ogunfidodo-a862a0153/)
 
 Project Link: [https://github.com/fidodo/monthly-spending](https://github.com/fidodo/monthly-spending)
-[Back to top](#monthly-spending)
+[return](#monthly-spending)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
@@ -382,4 +382,4 @@ Project Link: [https://github.com/fidodo/monthly-spending](https://github.com/fi
 
 ### return
 
-[Back to top](#monthly-spending)
+[return](#monthly-spending)

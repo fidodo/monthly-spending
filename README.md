@@ -2,7 +2,7 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
 
-# Monthly-spending-app
+# Monthly-spending
 
 <!-- PROJECT LOGO -->
 <br />

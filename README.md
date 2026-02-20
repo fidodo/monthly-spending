@@ -175,15 +175,15 @@ Create .env file for backend
    cp .env.example .env
    ```
 # Server Configuration
-PORT=5000
-NODE_ENV=development
+1. PORT=5000
+2. NODE_ENV=development
 
 # Database Configuration
-DB_USER=postgres
-DB_HOST=localhost
-DB_NAME=spending_tracker
-DB_PASSWORD=your_password_here
-DB_PORT=5432
+1. DB_USER=postgres
+2. DB_HOST=localhost
+3. DB_NAME=spending_tracker
+4. DB_PASSWORD=your_password_here
+5. DB_PORT=5432
 
 # JWT Configuration
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production

@@ -55,6 +55,8 @@
 
 [License](#license)
 
+[Return](#return)
+
 
 <!-- Features -->
 ## Features
@@ -336,3 +338,48 @@ Toggle between light and dark themes
 
 Preference is saved in localStorage
 ```
+<!-- Contributing -->
+## Contributing
+Fork the repository
+```sh
+Create your feature branch (git checkout -b feature/AmazingFeature)
+
+Commit your changes (git commit -m 'Add some AmazingFeature')
+
+Push to the branch (git push origin feature/AmazingFeature)
+
+Open a Pull Request
+```
+
+<!-- License-->
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+👨‍💻 Author
+Your Name
+
+GitHub: https://github.com/fidodo
+
+Email: ayokunleogunfidodo@gmail.com
+
+🙏 Acknowledgments
+React Bootstrap for the UI components
+
+Chart.js for beautiful charts
+
+All contributors who have helped with the projec
+
+Ayokunle Ogunfidodo - [@Linkedin](linkedin.com/in/ayokunle-ogunfidodo-a862a0153/)
+
+Project Link: [https://github.com/fidodo/monthly-spending](https://github.com/fidodo/monthly-spending)
+[Back to top](#monthly-spending)
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
+[issues-shield]: https://img.shields.io/github/issues/fidodo/monthly-spending.svg?style=flat-square
+[issues-url]: https://github.com/fidodo/monthly-spending/issues
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
+
+### return
+
+[Back to top](#monthly-spending)

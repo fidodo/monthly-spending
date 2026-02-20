@@ -31,6 +31,8 @@
 
 [Features](#features)
 
+[Advanced Features](#advanced-features)
+
 [Tech Stack](#tech-stack)
 
 [Prerequisites](#prerequisties)
@@ -72,8 +74,8 @@ Core Functionality
 ✅ Dark/Light Theme - Toggle between themes for comfortable viewing
 
 
-<!-- Tech Stack -->
-## Tech Stack
+<!-- Advanced Features -->
+## Advanced Features
 📊 Interactive Charts - progress bars for spending visualization
 
 🖨️ Print Reports - Generate printable spending reports
@@ -83,3 +85,117 @@ Core Functionality
 💾 Local Storage - Data persistence between sessions
 
 🔒 Secure Authentication - JWT-based authentication
+
+<!-- Tech Stack -->
+## Tech Stack
+Frontend
+React 19 - UI library
+
+React Router DOM 7 - Navigation and routing
+
+Bootstrap 5 + React-Bootstrap - Styling and components
+
+Axios - HTTP client for API requests
+
+Chart.js + React-Chartjs-2 - Data visualization
+
+React Icons - Icon library
+
+React Google OAuth - Google authentication
+
+Backend
+Node.js - Runtime environment
+
+Express 4 - Web framework
+
+PostgreSQL - Database
+
+pg - PostgreSQL client for Node.js
+
+bcryptjs - Password hashing
+
+jsonwebtoken - JWT authentication
+
+cors - Cross-origin resource sharing
+
+dotenv - Environment variables
+
+<!-- Prerequisites-->
+## Prerequisites
+Before you begin, ensure you have installed:
+
+Node.js (v14 or higher)
+
+npm (v6 or higher)
+
+PostgreSQL (v12 or higher)
+
+PGAdmin 4 (optional, for database management)
+
+Git (for cloning the repository)
+
+<!-- Installation -->
+## Installation
+### 1. Clone the Repository
+git clone https://github.com/yourusername/monthly-spending.git
+cd monthly-spending
+### 2. Install Frontend Dependencies
+cd frontend
+npm install
+### 3. Install Backend Dependencies
+cd ../backend
+npm install
+### 4. Set Up PostgreSQL Database
+# Access PostgreSQL
+sudo -u postgres psql
+
+# Create database
+CREATE DATABASE spending_tracker;
+
+# Create user (if needed)
+CREATE USER your_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE spending_tracker TO your_user;
+
+# Exit
+\q
+
+<!-- Configuration-->
+##⚙️ Configuration
+Create .env file for backend
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database Configuration
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=spending_tracker
+DB_PASSWORD=your_password_here
+DB_PORT=5432
+
+# JWT Configuration
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_EXPIRES_IN=7d
+
+# Google OAuth (optional - for Google login)
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+Create .env file for frontend
+   REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id_here
+REACT_APP_API_URL=http://localhost:5000/api
+
+<!-- Running the Application-->
+## Running The Application
+### Start the Backend Server
+cd backend
+npm run dev
+# Server runs on http://localhost:5000
+### Start the frontend
+cd frontend
+npm start
+# App runs on http://localhost:3000
+### Access the application
+http://localhost:3000
+
+

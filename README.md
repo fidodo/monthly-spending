@@ -1,3 +1,59 @@
+[![Issues][issues-shield]][issues-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
+
+
+# Monthly-spending-app
+
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+
+  <h3 align="center">Monthly spending app</h3>
+
+  <p align="center">
+  Monthly Spending App
+    <br />
+    <a href="https://github.com/fidodo/monthly-spending"><strong>Explore the repo »</strong></a>
+    <br />
+    <br />
+    <a href="">View Demo</a>
+    ·
+    <a href="https://github.com/fidodo/monthly-spending/issues">Report Bug</a>
+  </p>
+</p>
+
+
+
+<!-- TABLE OF CONTENTS -->
+
+## Table of Contents
+
+
+[Features](#features)
+
+Tech Stack
+
+Prerequisites
+
+Installation
+
+Configuration
+
+Running the Application
+
+API Endpoints
+
+Database Schema
+
+Usage Guide
+
+Troubleshooting
+
+Contributing
+
+License
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

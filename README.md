@@ -137,18 +137,25 @@ Git (for cloning the repository)
 <!-- Installation -->
 ## Installation
 ### 1. Clone the Repository
+```sh
 git clone https://github.com/fidodo/monthly-spending.git
+```
 cd monthly-spending
 ### 2. Install Frontend Dependencies
 cd frontend
+```sh
 npm install
+```
 ### 3. Install Backend Dependencies
 cd ../backend
+```sh
 npm install
+```
 ### 4. Set Up PostgreSQL Database
 # Access PostgreSQL
+```sh
 sudo -u postgres psql
-
+```
 # Create database
 CREATE DATABASE spending_tracker;
 
@@ -162,6 +169,10 @@ GRANT ALL PRIVILEGES ON DATABASE spending_tracker TO your_user;
 <!-- Configuration-->
 ##⚙️ Configuration
 Create .env file for backend
+
+ ```bash
+   cp .env.example .env
+   ```
 # Server Configuration
 PORT=5000
 NODE_ENV=development
@@ -189,11 +200,17 @@ REACT_APP_API_URL=http://localhost:5000/api
 ## Running The Application
 ### Start the Backend Server
 cd backend
+
+```sh
 npm run dev
+```
 # Server runs on http://localhost:5000
 ### Start the frontend
 cd frontend
+
+```sh
 npm start
+```
 # App runs on http://localhost:3000
 ### Access the application
 http://localhost:3000

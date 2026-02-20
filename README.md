@@ -160,8 +160,9 @@ sudo -u postgres psql
 CREATE DATABASE spending_tracker;
 
 # Create user (if needed)
-CREATE USER your_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE spending_tracker TO your_user;
+1. CREATE USER your_user WITH PASSWORD 'your_password';
+
+2. GRANT ALL PRIVILEGES ON DATABASE spending_tracker TO your_user;
 
 # Exit
 \q
@@ -189,12 +190,12 @@ JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
 JWT_EXPIRES_IN=7d
 
 # Google OAuth (optional - for Google login)
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+1. GOOGLE_CLIENT_ID=your_google_client_id_here
+2 .GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 
 Create .env file for frontend
-   REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id_here
-REACT_APP_API_URL=http://localhost:5000/api
+1. REACT_APP_GOOGLE_CLIENT_ID=your_google_client_id_here
+2. REACT_APP_API_URL=http://localhost:5000/api
 
 <!-- Running the Application-->
 ## Running The Application

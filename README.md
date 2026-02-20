@@ -137,7 +137,7 @@ Git (for cloning the repository)
 <!-- Installation -->
 ## Installation
 ### 1. Clone the Repository
-git clone https://github.com/yourusername/monthly-spending.git
+git clone https://github.com/fidodo/monthly-spending.git
 cd monthly-spending
 ### 2. Install Frontend Dependencies
 cd frontend

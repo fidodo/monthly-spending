@@ -35,7 +35,7 @@
 
 [Tech Stack](#tech-stack)
 
-[Prerequisites](#prerequisties)
+[Prerequisites](#prerequisites)
 
 [Installation](#installation)
 
@@ -164,7 +164,7 @@ CREATE DATABASE spending_tracker;
 
 2. GRANT ALL PRIVILEGES ON DATABASE spending_tracker TO your_user;
 
-# Exit
+ Exit
 \q
 
 <!-- Configuration-->

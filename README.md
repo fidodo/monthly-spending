@@ -220,12 +220,17 @@ http://localhost:3000
 ## API Endpoints
 ### Authentication Routes (/api/auth)
 Method	Endpoint	Description
+
+```sh
 POST	/register	Register new user
 POST	/login	Login user
 POST	/google	Google OAuth login
 GET	/me	Get current user info
+```
 ### Spending Routes (/api/spending)
 Method	Endpoint	Description
+
+```sh
 GET	/	Get all spending entries
 GET	/:id	Get single spending entry
 POST	/	Create new spending entry
@@ -233,16 +238,22 @@ PUT	/:id	Update spending entry
 DELETE	/:id	Delete spending entry
 GET	/analytics/summary	Get spending summary
 GET	/analytics/categories	Get category breakdown
+```
 ### Bills Routes (/api/bills)
 Method	Endpoint	Description
+
+```sh
 GET	/	Get all bills
 POST	/	Create new bill
 PUT	/:id	Update bill
 DELETE	/:id	Delete bill
 PUT	/:id/paid	Mark bill as paid
 PUT	/:id/unpaid	Mark bill as unpaid
+```
 ### Loans Routes (/api/loans)
 Method	Endpoint	Description
+
+```sh
 GET	/	Get all loans
 GET	/active	Get active (unpaid) loans
 GET	/paid	Get paid loans
@@ -253,58 +264,75 @@ PUT	/:id/paid	Mark loan as paid
 PUT	/:id/unpaid	Mark loan as unpaid
 POST	/:id/payments	Record loan payment
 GET	/:id/payments	Get loan payment history
+```
+
+
 ### Earnings Routes (/api/earnings)
 Method	Endpoint	Description
+
+```sh
 GET	/current	Get current month's earning
 GET	/history	Get earnings history
 POST	/	Set monthly earning
 PUT	/:id	Update earning
 DELETE	/:id	Delete earning
 GET	/analytics/comparison	Compare spending vs earnings
+```
 
 <!--- Usage Guide -->
 ## Usage Guide
 1. First Time Setup
 Register with email/password or Google account
 
+```sh
 Set your monthly earning on the dashboard
-
+```
 2. Adding Expenses
 Click "Add Spending" in the navigation
 
+```sh
 Enter amount, description, category, and date
+```
 
+```sh
 Submit to save the expense
+```
 
 3. Managing Bills & Loans
 Navigate to "Bills & Loans" page
 
+```sh
 Click "Add New" to create a bill or loan
 
 Fill in the details (different forms for bills vs loans)
 
 Mark as paid/unpaid as needed
+```
 
 4. Viewing Analytics
 Go to "Analytics" page
 
+```sh
 View spending breakdown by category
 
 Toggle between list view and pie chart
 
 Click "Show more" to see additional categories
-
+```
 5. Printing Reports
 On Analytics page, click "Print Report"
 
+```sh
 Choose between recent spending or all spending
 
 Generate a formatted PDF-style report
+```
 
 6. Theme Switching
 Click the sun/moon icon in the navbar
 
+```sh
 Toggle between light and dark themes
 
 Preference is saved in localStorage
-
+```

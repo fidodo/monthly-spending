@@ -92,7 +92,7 @@ const CustomNavbar = ({ user, onLogout }) => {
           </Nav>
 
           <Nav className="align-items-center">
-            <div className="me-3">
+            <div className="mx-3">
               <SimpleThemeSwitcher />
             </div>
 

@@ -63,10 +63,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
     ];
 
     setItems(combined);
-    console.log("Filtered items:", combined);
   }, [propBills, propLoans]);
-
-  console.log(items, "items");
 
   // Filter items by type
   const recurringBills = items.filter((item) => item.type === "bill");
@@ -135,7 +132,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
   // ✅ CREATE - Add new bill/loan
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting form with data:", formData);
+
     try {
       let response;
       if (formData.type === "bill") {
@@ -170,7 +167,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
           accountNumber: null,
         });
       }
-      console.log("API response:", response);
+
       // Add to local state
       const newItem = { ...response.data, type: formData.type };
       setItems([...items, newItem]);
@@ -388,7 +385,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
       <Row className="mb-4">
         <Col>
           <h2>Bills & Loans Management</h2>
-          <p className="text-muted">
+          <p className="theme-text-muted">
             Track your recurring bills and loan payments
           </p>
         </Col>
@@ -732,7 +729,8 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                           <strong>{payment.description}</strong>
                           <br />
                           <small className="text-muted">
-                            {payment.date} • {payment.category}
+                            {new Date(payment.date).toLocaleDateString("en-GB")}{" "}
+                            • {payment.category}
                           </small>
                         </div>
                         <div className="text-danger fw-bold">

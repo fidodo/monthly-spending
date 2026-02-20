@@ -214,6 +214,8 @@ function App() {
                   <Analytics
                     spending={spending}
                     monthlyEarning={monthlyEarning}
+                    totalSpent={totalSpent}
+                    bills={bills}
                   />
                 ) : (
                   <Navigate to="/login" />

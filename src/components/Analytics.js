@@ -9,16 +9,19 @@ import {
   Button,
   Collapse,
 } from "react-bootstrap";
-import { FaPrint, FaChartPie, FaList } from "react-icons/fa";
+import { FaPrint, FaChartPie, FaList, FaTrash } from "react-icons/fa";
 import PieChartComponent from "./PieChartComponent";
 
-const Analytics = ({ spending, monthlyEarning }) => {
+const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
   const [showPieChart, setShowPieChart] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
   // Calculate category totals
   const categoryTotals = useMemo(() => {
     const totals = {};
     spending.forEach((item) => {
-      totals[item.category] = (totals[item.category] || 0) + item.amount;
+      totals[item.category] =
+        (totals[item.category] || 0) + Number(item.amount);
     });
     return totals;
   }, [spending]);
@@ -49,14 +52,19 @@ const Analytics = ({ spending, monthlyEarning }) => {
     };
   }, [topCategories]);
 
-  // Calculate total spent
-  const totalSpent = spending.reduce(
-    (sum, item) => sum + Number(item.amount),
+  const amountOfBillsandLoans = bills.reduce(
+    (sum, bill) => sum + Number(bill.amount),
     0,
   );
+
+  const totalSpending = totalSpent + amountOfBillsandLoans;
+
   const overallPercentage =
     monthlyEarning > 0 ? (totalSpent / monthlyEarning) * 100 : 0;
-  console.log(monthlyEarning, totalSpent, overallPercentage);
+
+  const overAllPercentageWithBillsAndLoans =
+    monthlyEarning > 0 ? (totalSpending / monthlyEarning) * 100 : 0;
+
   const handleSpendingPrint = () => {
     if (!spending || spending.length === 0) {
       alert("No spending data to print!");
@@ -143,9 +151,9 @@ const Analytics = ({ spending, monthlyEarning }) => {
 
       <Row className="mb-4">
         <Col md={6}>
-          <Card className="h-100">
+          <Card className="h-60">
             <Card.Body>
-              <Card.Title>Overall Spending</Card.Title>
+              <Card.Title>Spending excluding loans and bills</Card.Title>
               <div className="text-center mb-3">
                 <h3 className="text-primary">
                   £{typeof totalSpent === "number" && totalSpent.toFixed(2)}
@@ -161,6 +169,37 @@ const Analytics = ({ spending, monthlyEarning }) => {
                 now={overallPercentage > 100 ? 100 : overallPercentage}
                 variant={overallPercentage >= 80 ? "warning" : "success"}
                 label={`${overallPercentage.toFixed(1)}%`}
+              />
+            </Card.Body>
+          </Card>
+          <Card className="mt-2 h-40">
+            <Card.Body>
+              <Card.Title>Spending Including loans and bills </Card.Title>
+              <div className="text-center mb-3">
+                <h3 className="text-warning">
+                  £
+                  {typeof totalSpending === "number" &&
+                    totalSpending.toFixed(2)}
+                </h3>
+                <p className="text-muted">
+                  of £
+                  {typeof monthlyEarning === "number" &&
+                    monthlyEarning.toFixed(2)}{" "}
+                  monthly earning
+                </p>
+              </div>
+              <ProgressBar
+                now={
+                  overAllPercentageWithBillsAndLoans > 100
+                    ? 100
+                    : overAllPercentageWithBillsAndLoans
+                }
+                variant={
+                  overAllPercentageWithBillsAndLoans >= 80
+                    ? "warning"
+                    : "success"
+                }
+                label={`${overAllPercentageWithBillsAndLoans.toFixed(1)}%`}
               />
             </Card.Body>
           </Card>
@@ -192,21 +231,102 @@ const Analytics = ({ spending, monthlyEarning }) => {
               <Collapse in={!showPieChart}>
                 <div>
                   {topCategories.length > 0 ? (
-                    topCategories.map(([category, amount]) => (
-                      <div key={category} className="mb-3">
-                        <div className="d-flex justify-content-between mb-1">
-                          <span className="fw-medium">{category}</span>
-                          <span className="text-primary fw-bold">
-                            £{typeof amount === "number" && amount.toFixed(2)}
+                    <Card className="border-0">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <Card.Title>Top Categories</Card.Title>
+                          {/* Show more/less link - OUTSIDE the table but inside card header */}
+                          {topCategories.length > 2 && (
+                            <Button
+                              variant="link"
+                              onClick={() =>
+                                setShowAllCategories(!showAllCategories)
+                              }
+                              className="text-decoration-none p-0"
+                              size="sm"
+                            >
+                              {showAllCategories ? (
+                                <>Show less ▲</>
+                              ) : (
+                                <>Show {topCategories.length - 2} more ▼</>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Table section - separate from the link */}
+                        <div className="table-responsive">
+                          <table className="table table-borderless">
+                            <tbody>
+                              {(showAllCategories
+                                ? topCategories
+                                : topCategories.slice(0, 2)
+                              ).map(([category, amount]) => {
+                                const percentage =
+                                  categoryPercentages[category] || 0;
+                                const colors = {
+                                  Food: "#28a745",
+                                  Transportation: "#17a2b8",
+                                  Entertainment: "#ffc107",
+                                  Shopping: "#dc3545",
+                                  Bills: "#007bff",
+                                  Healthcare: "#6c757d",
+                                  Education: "#6610f2",
+                                  Other: "#6f42c1",
+                                };
+
+                                return (
+                                  <tr key={category}>
+                                    <td
+                                      className="ps-0"
+                                      style={{ width: "40px" }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: "12px",
+                                          height: "12px",
+                                          borderRadius: "3px",
+                                          backgroundColor:
+                                            colors[category] || "#6c757d",
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <span className="fw-medium">
+                                        {category}
+                                      </span>
+                                      <br />
+                                      <small className="text-muted">
+                                        {percentage.toFixed(1)}% of budget
+                                      </small>
+                                    </td>
+                                    <td className="text-end pe-0">
+                                      <span className="fw-bold text-primary d-block">
+                                        £{Number(amount).toFixed(2)}
+                                      </span>
+                                      <small className="text-muted">
+                                        {((amount / totalSpent) * 100).toFixed(
+                                          1,
+                                        )}
+                                        % of total
+                                      </small>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Total summary at bottom */}
+                        <div className="d-flex justify-content-between mt-3 pt-2 border-top">
+                          <span className="text-muted">Total Categories:</span>
+                          <span className="fw-bold">
+                            {topCategories.length}
                           </span>
                         </div>
-                        <ProgressBar
-                          now={categoryPercentages[category] || 0}
-                          variant="info"
-                          label={`${(categoryPercentages[category] || 0).toFixed(1)}%`}
-                        />
-                      </div>
-                    ))
+                      </Card.Body>
+                    </Card>
                   ) : (
                     <p className="text-muted text-center">
                       No spending data available
@@ -245,12 +365,15 @@ const Analytics = ({ spending, monthlyEarning }) => {
                       <th>Description</th>
                       <th>Category</th>
                       <th>Amount</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {[...spending].reverse().map((item) => (
                       <tr key={item.id}>
-                        <td>{item.date}</td>
+                        <td>
+                          {new Date(item.date).toISOString().split("T")[0]}
+                        </td>
                         <td>{item.description}</td>
                         <td>
                           <span className="badge bg-info">{item.category}</span>
@@ -258,14 +381,24 @@ const Analytics = ({ spending, monthlyEarning }) => {
                         <td className="text-danger">
                           £{Number(item.amount).toFixed(2)}
                         </td>
+                        <td>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => {
+                              // handleDeleteSpending(item.id);
+                            }}
+                          >
+                            <FaTrash />{" "}
+                            {/* Changed to FaTrash - more appropriate icon */}
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </Table>
               ) : (
-                <p className="theme-text-muted text-center">
-                  No spending records found
-                </p>
+                <p className="text-muted">No spending data available</p>
               )}
             </Card.Body>
           </Card>

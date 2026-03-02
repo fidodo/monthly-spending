@@ -9,11 +9,13 @@ import {
   Button,
   Collapse,
 } from "react-bootstrap";
-import { FaPrint, FaChartPie, FaList, FaTrash } from "react-icons/fa";
-import PieChartComponent from "./PieChartComponent";
+import { FaPrint, FaList, FaTrash } from "react-icons/fa";
+
+import { getBillsAndLoansAsSpending } from "../helper/getBillsAndLoansAsSpending";
 
 const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
-  const [showPieChart, setShowPieChart] = useState(false);
+  const [showSpendingExBillsAndLoans, setshowSpendingExBillsAndLoans] =
+    useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Calculate category totals
@@ -44,13 +46,9 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5);
   }, [categoryTotals]);
-
-  const pieChartData = useMemo(() => {
-    return {
-      labels: topCategories.map(([category]) => category),
-      amounts: topCategories.map(([, amount]) => amount),
-    };
-  }, [topCategories]);
+  console.log("Category Totals:", categoryTotals);
+  console.log("Category Percentages:", categoryPercentages);
+  console.log("Top Categories:", topCategories);
 
   const amountOfBillsandLoans = bills.reduce(
     (sum, bill) => sum + Number(bill.amount),
@@ -64,6 +62,57 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
 
   const overAllPercentageWithBillsAndLoans =
     monthlyEarning > 0 ? (totalSpending / monthlyEarning) * 100 : 0;
+
+  const recentSpending = [...spending].reverse().slice(0, 5);
+  console.log(recentSpending, "recent spending");
+
+  const billsAndLoansAsSpending = getBillsAndLoansAsSpending(bills);
+  console.log(billsAndLoansAsSpending, "bills and loans as spending");
+
+  const allSpending = useMemo(() => {
+    return [...recentSpending, ...billsAndLoansAsSpending];
+  }, [recentSpending, billsAndLoansAsSpending]);
+
+  console.log(allSpending, "all spending combined");
+
+  const categoryTotalsWithBillsAndLoans = useMemo(() => {
+    const totals = {
+      ...allSpending.reduce((acc, item) => {
+        acc[item.category] = (acc[item.category] || 0) + Number(item.amount);
+        return acc;
+      }, {}),
+    };
+    return totals;
+  }, [allSpending]);
+
+  const categoryPercentagesWithBillsAndLoans = useMemo(() => {
+    const percentages = {};
+    Object.keys(categoryTotalsWithBillsAndLoans).forEach((category) => {
+      percentages[category] =
+        monthlyEarning > 0
+          ? (categoryTotalsWithBillsAndLoans[category] / monthlyEarning) * 100
+          : 0;
+    });
+    return percentages;
+  }, [categoryTotalsWithBillsAndLoans, monthlyEarning]);
+
+  const topCategoriesWithBillsAndLoans = useMemo(() => {
+    return Object.entries(categoryTotalsWithBillsAndLoans)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+  }, [categoryTotalsWithBillsAndLoans]);
+  console.log(
+    "Category Totals with Bills and Loans:",
+    categoryTotalsWithBillsAndLoans,
+  );
+  console.log(
+    "Category Percentages with Bills and Loans:",
+    categoryPercentagesWithBillsAndLoans,
+  );
+  console.log(
+    "Top Categories with Bills and Loans:",
+    topCategoriesWithBillsAndLoans,
+  );
 
   const handleSpendingPrint = () => {
     if (!spending || spending.length === 0) {
@@ -209,26 +258,30 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
           <Card className="h-100">
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <Card.Title>Top Categories</Card.Title>
+                <Card.Title>
+                  Breakdown Spending by category(ex bills and loans)
+                </Card.Title>
                 <Button
                   variant="outline-primary"
                   size="sm"
-                  onClick={() => setShowPieChart(!showPieChart)}
+                  onClick={() =>
+                    setshowSpendingExBillsAndLoans(!showSpendingExBillsAndLoans)
+                  }
                   className="d-flex align-items-center gap-2"
                 >
-                  {showPieChart ? (
+                  {showSpendingExBillsAndLoans ? (
                     <>
-                      <FaList /> Show List
+                      <FaList /> Show Spending (ex bills and loans)
                     </>
                   ) : (
                     <>
-                      <FaChartPie /> Show Chart
+                      <FaList /> Show Spending with bills and loans
                     </>
                   )}
                 </Button>
               </div>
 
-              <Collapse in={!showPieChart}>
+              <Collapse in={!showSpendingExBillsAndLoans}>
                 <div>
                   {topCategories.length > 0 ? (
                     <Card className="border-0">
@@ -308,7 +361,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                                         {((amount / totalSpent) * 100).toFixed(
                                           1,
                                         )}
-                                        % of total
+                                        % of total spent without bills and loans
                                       </small>
                                     </td>
                                   </tr>
@@ -335,15 +388,114 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                 </div>
               </Collapse>
 
-              <Collapse in={showPieChart}>
+              <Collapse in={showSpendingExBillsAndLoans}>
                 <div>
-                  {topCategories.length > 0 ? (
-                    <PieChartComponent
-                      data={pieChartData.amounts}
-                      labels={pieChartData.labels}
-                    />
+                  {topCategoriesWithBillsAndLoans.length > 0 ? (
+                    <Card className="border-0">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <Card.Title>Top Categories</Card.Title>
+                          {/* Show more/less link - OUTSIDE the table but inside card header */}
+                          {topCategories.length > 2 && (
+                            <Button
+                              variant="link"
+                              onClick={() =>
+                                setShowAllCategories(!showAllCategories)
+                              }
+                              className="text-decoration-none p-0"
+                              size="sm"
+                            >
+                              {showAllCategories ? (
+                                <>Show less ▲</>
+                              ) : (
+                                <>
+                                  Show{" "}
+                                  {topCategoriesWithBillsAndLoans.length - 2}{" "}
+                                  more ▼
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Table section - separate from the link */}
+                        <div className="table-responsive">
+                          <table className="table table-borderless">
+                            <tbody>
+                              {(showAllCategories
+                                ? topCategoriesWithBillsAndLoans
+                                : topCategoriesWithBillsAndLoans.slice(0, 3)
+                              ).map(([category, amount]) => {
+                                const percentage =
+                                  categoryPercentages[category] || 0;
+                                const colors = {
+                                  Food: "#28a745",
+                                  Transportation: "#17a2b8",
+                                  Entertainment: "#ffc107",
+                                  Shopping: "#dc3545",
+                                  Bills: "#007bff",
+                                  Healthcare: "#6c757d",
+                                  Education: "#6610f2",
+                                  Other: "#6f42c1",
+                                };
+
+                                return (
+                                  <tr key={category}>
+                                    <td
+                                      className="ps-0"
+                                      style={{ width: "40px" }}
+                                    >
+                                      <div
+                                        style={{
+                                          width: "12px",
+                                          height: "12px",
+                                          borderRadius: "3px",
+                                          backgroundColor:
+                                            colors[category] || "#6c757d",
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <span className="fw-medium">
+                                        {category}
+                                      </span>
+                                      <br />
+                                      <small className="text-muted">
+                                        {percentage.toFixed(1)}% of budget
+                                      </small>
+                                    </td>
+                                    <td className="text-end pe-0">
+                                      <span className="fw-bold text-primary d-block">
+                                        £{Number(amount).toFixed(2)}
+                                      </span>
+                                      <small className="text-muted">
+                                        {(
+                                          (amount / totalSpending) *
+                                          100
+                                        ).toFixed(1)}
+                                        % of total spent with bills and loans
+                                      </small>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Total summary at bottom */}
+                        <div className="d-flex justify-content-between mt-3 pt-2 border-top">
+                          <span className="text-muted">Total Categories:</span>
+                          <span className="fw-bold">
+                            {topCategories.length}
+                          </span>
+                        </div>
+                      </Card.Body>
+                    </Card>
                   ) : (
-                    <p className="text-muted text-center">No data for chart</p>
+                    <p className="text-muted text-center">
+                      No spending data available
+                    </p>
                   )}
                 </div>
               </Collapse>

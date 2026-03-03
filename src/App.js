@@ -16,6 +16,7 @@ import Analytics from "./components/Analytics";
 import Profile from "./components/Profile";
 import BillsLoans from "./components/BillsLoans";
 import { spendingAPI, earningsAPI, billsAPI, loansAPI } from "./services/api";
+import MonthBreakdown from "./components/MonthBreakdown";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -39,13 +40,26 @@ function App() {
   }, []);
 
   // ✅ NEW: Fetch all user data from backend
+
+  // ✅ FIXED: Handle login - now fetches data after successful login
+  const handleLogin = async (userData, token) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
+    // Fetch all data immediately after login
+    await fetchAllUserData();
+  };
+
   const fetchAllUserData = async () => {
     setLoading(true);
     try {
       console.log("📥 Fetching all user data...");
 
       // Fetch spending
-      const spendingRes = await spendingAPI.getAll();
+      const spendingRes = await spendingAPI.getCurrentMonth();
       console.log(spendingRes.data, "spending entries fetched");
       setSpending(spendingRes.data);
       localStorage.setItem("spending", JSON.stringify(spendingRes.data));
@@ -54,6 +68,10 @@ function App() {
       try {
         const earningRes = await earningsAPI.getCurrent();
         console.log("Current Monthly Earning:", earningRes.data.amount);
+
+        // Extract the amount from the response
+        const earningAmount = earningRes?.data?.amount || 0;
+        console.log("💰 Setting monthly earning to:", earningAmount);
         setMonthlyEarning(earningRes.data.amount || 0);
         localStorage.setItem(
           "monthlyEarning",
@@ -65,7 +83,8 @@ function App() {
 
       // Fetch bills
       try {
-        const billsRes = await billsAPI.getAll();
+        const billsRes = await billsAPI.getCurrentMonth();
+        console.log(billsRes.data, "bills fetched");
         setBills(billsRes.data);
         localStorage.setItem("bills", JSON.stringify(billsRes.data));
       } catch (err) {
@@ -74,7 +93,8 @@ function App() {
 
       // Fetch loans
       try {
-        const loansRes = await loansAPI.getAll();
+        const loansRes = await loansAPI.getCurrentMonth();
+        console.log(loansRes.data, "loans fetched");
         setLoans(loansRes.data);
         localStorage.setItem("loans", JSON.stringify(loansRes.data));
       } catch (err) {
@@ -87,18 +107,6 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ✅ FIXED: Handle login - now fetches data after successful login
-  const handleLogin = async (userData, token) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-    if (token) {
-      localStorage.setItem("token", token);
-    }
-
-    // Fetch all data immediately after login
-    await fetchAllUserData();
   };
 
   // Handle logout
@@ -241,6 +249,10 @@ function App() {
                   <Navigate to="/login" />
                 )
               }
+            />
+            <Route
+              path="/archive"
+              element={user ? <MonthBreakdown /> : <Navigate to="/login" />}
             />
           </Routes>
         </Container>

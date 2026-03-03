@@ -8,27 +8,97 @@ const auth = require("../middleware/auth");
 // ============================================
 
 /**
+ * HELPER FUNCTION: Get first day of month from date string
+ */
+const getMonthFromDate = (dateString) => {
+  if (!dateString) {
+    console.error("❌ getMonthFromDate received null/undefined date");
+    return null;
+  }
+
+  try {
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.error("❌ Invalid date string:", dateString);
+      return null;
+    }
+
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+
+    const result = `${year}-${month}-01`;
+    console.log("✅ getMonthFromDate success:", dateString, "→", result);
+    return result;
+  } catch (e) {
+    console.error("❌ Error in getMonthFromDate:", e);
+    return null;
+  }
+};
+
+/**
  * @route   GET /api/bills
- * @desc    Get all bills and loans for logged in user
+ * @desc    Get all bills and loans (optionally filtered by month)
  * @access  Private
+ * Example: /api/bills?month=2024-03-01
  */
 router.get("/", auth, async (req, res) => {
   try {
     const userId = req.userId;
+    const { month } = req.query;
 
-    const result = await db.query(
-      `SELECT * FROM bills_loans 
-             WHERE user_id = $1 
-             ORDER BY 
+    let query = `SELECT * FROM bills_loans WHERE user_id = $1`;
+    let params = [userId];
+    let paramIndex = 2;
+
+    // If month is provided, filter by it
+    if (month) {
+      query += ` AND month = $${paramIndex}`;
+      params.push(month);
+    }
+
+    query += ` ORDER BY 
                 CASE WHEN status = 'unpaid' THEN 0 ELSE 1 END,
-                due_date ASC`,
-      [userId],
-    );
+                due_date ASC`;
 
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching bills/loans:", error);
     res.status(500).json({ error: "Failed to fetch bills and loans" });
+  }
+});
+
+/**
+ * @route   GET /api/bills/month/:year/:month
+ * @desc    Get bills for a specific month (NEW ROUTE)
+ * @access  Private
+ */
+router.get("/month/:year/:month", auth, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { year, month } = req.params;
+    const monthDate = `${year}-${month.padStart(2, "0")}-01`;
+
+    const result = await db.query(
+      `SELECT * FROM bills_loans 
+       WHERE user_id = $1 AND month = $2
+       ORDER BY due_date ASC`,
+      [userId, monthDate],
+    );
+
+    res.json({
+      month: monthDate,
+      bills: result.rows,
+      total: result.rows.reduce(
+        (sum, item) => sum + parseFloat(item.amount),
+        0,
+      ),
+    });
+  } catch (error) {
+    console.error("Error fetching monthly bills:", error);
+    res.status(500).json({ error: "Failed to fetch monthly bills" });
   }
 });
 
@@ -60,13 +130,14 @@ router.get("/:id", auth, async (req, res) => {
 
 /**
  * @route   GET /api/bills/type/:type
- * @desc    Get bills OR loans filtered by type
+ * @desc    Get bills OR loans filtered by type and optional month
  * @access  Private
  */
 router.get("/type/:type", auth, async (req, res) => {
   try {
     const { type } = req.params;
     const userId = req.userId;
+    const { month } = req.query;
 
     // Validate type
     if (type !== "bill" && type !== "loan") {
@@ -75,15 +146,20 @@ router.get("/type/:type", auth, async (req, res) => {
         .json({ error: 'Type must be either "bill" or "loan"' });
     }
 
-    const result = await db.query(
-      `SELECT * FROM bills_loans 
-             WHERE user_id = $1 AND type = $2 
-             ORDER BY 
-                CASE WHEN status = 'unpaid' THEN 0 ELSE 1 END,
-                due_date ASC`,
-      [userId, type],
-    );
+    let query = `SELECT * FROM bills_loans WHERE user_id = $1 AND type = $2`;
+    let params = [userId, type];
+    let paramIndex = 3;
 
+    if (month) {
+      query += ` AND month = $${paramIndex}`;
+      params.push(month);
+    }
+
+    query += ` ORDER BY 
+                CASE WHEN status = 'unpaid' THEN 0 ELSE 1 END,
+                due_date ASC`;
+
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error("Error fetching by type:", error);
@@ -108,8 +184,12 @@ router.post("/", auth, async (req, res) => {
       due_date,
       recurrence = "monthly",
       status = "unpaid",
+      total_loan_amount,
+      interest_rate,
+      term_months,
+      remaining_balance,
     } = req.body;
-
+    console.log("Received due_date:", due_date);
     // Validation
     if (!type || !name || !amount || !due_date) {
       return res.status(400).json({
@@ -125,11 +205,30 @@ router.post("/", auth, async (req, res) => {
       return res.status(400).json({ error: "Amount must be greater than 0" });
     }
 
+    // Calculate month from due_date
+    const month = getMonthFromDate(due_date);
+    console.log("Calculated month from due_date:", month);
+
+    console.log("🔍 due_date value:", due_date);
+    console.log("🔍 due_date type:", typeof due_date);
+    console.log("🔍 calculated month:", month);
+    console.log("🔍 month type:", typeof month);
+
+    // DEBUG: Check if month is valid
+    if (!month) {
+      console.error("❌ month is null/undefined! due_date was:", due_date);
+      return res.status(400).json({
+        error: "Invalid due_date format. Could not calculate month.",
+        received_due_date: due_date,
+      });
+    }
+
     const result = await db.query(
       `INSERT INTO bills_loans 
-             (user_id, type, name, amount, category, due_date, recurrence, status) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-             RETURNING *`,
+       (user_id, type, name, amount, category, due_date, month, recurrence, status,
+        total_loan_amount, interest_rate, term_months, remaining_balance) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+       RETURNING *`,
       [
         userId,
         type,
@@ -137,8 +236,13 @@ router.post("/", auth, async (req, res) => {
         amount,
         category || null,
         due_date,
+        month,
         recurrence,
         status,
+        total_loan_amount || null,
+        interest_rate || null,
+        term_months || null,
+        remaining_balance || null,
       ],
     );
 
@@ -171,19 +275,37 @@ router.put("/:id", auth, async (req, res) => {
       return res.status(404).json({ error: "Bill/Loan not found" });
     }
 
+    // Calculate new month if due_date is being updated
+    let month = null;
+    if (due_date) {
+      month = getMonthFromDate(due_date);
+    }
+
     // Update
     const result = await db.query(
       `UPDATE bills_loans 
-             SET type = COALESCE($1, type),
-                 name = COALESCE($2, name),
-                 amount = COALESCE($3, amount),
-                 category = COALESCE($4, category),
-                 due_date = COALESCE($5, due_date),
-                 recurrence = COALESCE($6, recurrence),
-                 status = COALESCE($7, status)
-             WHERE id = $8 AND user_id = $9
-             RETURNING *`,
-      [type, name, amount, category, due_date, recurrence, status, id, userId],
+       SET type = COALESCE($1, type),
+           name = COALESCE($2, name),
+           amount = COALESCE($3, amount),
+           category = COALESCE($4, category),
+           due_date = COALESCE($5, due_date),
+           month = COALESCE($6, month),
+           recurrence = COALESCE($7, recurrence),
+           status = COALESCE($8, status)
+       WHERE id = $9 AND user_id = $10
+       RETURNING *`,
+      [
+        type,
+        name,
+        amount,
+        category,
+        due_date,
+        month,
+        recurrence,
+        status,
+        id,
+        userId,
+      ],
     );
 
     res.json(result.rows[0]);
@@ -205,10 +327,10 @@ router.put("/:id/paid", auth, async (req, res) => {
 
     const result = await db.query(
       `UPDATE bills_loans 
-             SET status = 'paid', 
-                 last_paid = CURRENT_TIMESTAMP 
-             WHERE id = $1 AND user_id = $2 
-             RETURNING *`,
+       SET status = 'paid', 
+           last_paid = CURRENT_TIMESTAMP 
+       WHERE id = $1 AND user_id = $2 
+       RETURNING *`,
       [id, userId],
     );
 
@@ -235,10 +357,10 @@ router.put("/:id/unpaid", auth, async (req, res) => {
 
     const result = await db.query(
       `UPDATE bills_loans 
-             SET status = 'unpaid',
-                 last_paid = NULL
-             WHERE id = $1 AND user_id = $2 
-             RETURNING *`,
+       SET status = 'unpaid',
+           last_paid = NULL
+       WHERE id = $1 AND user_id = $2 
+       RETURNING *`,
       [id, userId],
     );
 
@@ -293,10 +415,10 @@ router.get("/analytics/upcoming", auth, async (req, res) => {
 
     const result = await db.query(
       `SELECT * FROM bills_loans 
-             WHERE user_id = $1 
-                AND status = 'unpaid'
-                AND due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
-             ORDER BY due_date ASC`,
+       WHERE user_id = $1 
+          AND status = 'unpaid'
+          AND due_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+       ORDER BY due_date ASC`,
       [userId],
     );
 
@@ -325,10 +447,10 @@ router.get("/analytics/overdue", auth, async (req, res) => {
 
     const result = await db.query(
       `SELECT * FROM bills_loans 
-             WHERE user_id = $1 
-                AND status = 'unpaid'
-                AND due_date < CURRENT_DATE
-             ORDER BY due_date ASC`,
+       WHERE user_id = $1 
+          AND status = 'unpaid'
+          AND due_date < CURRENT_DATE
+       ORDER BY due_date ASC`,
       [userId],
     );
 
@@ -348,49 +470,59 @@ router.get("/analytics/overdue", auth, async (req, res) => {
 
 /**
  * @route   GET /api/bills/analytics/summary
- * @desc    Get summary of all bills and loans
+ * @desc    Get summary of all bills and loans (optionally by month)
  * @access  Private
  */
 router.get("/analytics/summary", auth, async (req, res) => {
   try {
     const userId = req.userId;
+    const { month } = req.query;
 
-    // Total bills
-    const totalBills = await db.query(
-      `SELECT 
-                COALESCE(SUM(CASE WHEN type = 'bill' THEN amount ELSE 0 END), 0) as total_bills,
-                COALESCE(SUM(CASE WHEN type = 'loan' THEN amount ELSE 0 END), 0) as total_loans,
-                COUNT(CASE WHEN type = 'bill' THEN 1 END) as bills_count,
-                COUNT(CASE WHEN type = 'loan' THEN 1 END) as loans_count
-             FROM bills_loans 
-             WHERE user_id = $1`,
-      [userId],
-    );
+    let query = `SELECT * FROM bills_loans WHERE user_id = $1`;
+    let params = [userId];
 
-    // Unpaid counts
-    const unpaid = await db.query(
-      `SELECT 
-                COUNT(CASE WHEN type = 'bill' AND status = 'unpaid' THEN 1 END) as unpaid_bills,
-                COUNT(CASE WHEN type = 'loan' AND status = 'unpaid' THEN 1 END) as unpaid_loans,
-                COALESCE(SUM(CASE WHEN type = 'bill' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as unpaid_bills_amount,
-                COALESCE(SUM(CASE WHEN type = 'loan' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as unpaid_loans_amount
-             FROM bills_loans 
-             WHERE user_id = $1`,
-      [userId],
-    );
+    if (month) {
+      query += ` AND month = $2`;
+      params.push(month);
+    }
+
+    const result = await db.query(query, params);
+    const rows = result.rows;
+
+    // Calculate totals
+    const totalBills = rows
+      .filter((item) => item.type === "bill")
+      .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+    const totalLoans = rows
+      .filter((item) => item.type === "loan")
+      .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+    const unpaidBills = rows
+      .filter((item) => item.type === "bill" && item.status === "unpaid")
+      .reduce((sum, item) => sum + parseFloat(item.amount), 0);
+
+    const unpaidLoans = rows
+      .filter((item) => item.type === "loan" && item.status === "unpaid")
+      .reduce((sum, item) => sum + parseFloat(item.amount), 0);
 
     res.json({
+      month: month || "all",
       totals: {
-        bills: parseFloat(totalBills.rows[0].total_bills),
-        loans: parseFloat(totalBills.rows[0].total_loans),
-        bills_count: parseInt(totalBills.rows[0].bills_count),
-        loans_count: parseInt(totalBills.rows[0].loans_count),
+        bills: totalBills,
+        loans: totalLoans,
+        bills_count: rows.filter((item) => item.type === "bill").length,
+        loans_count: rows.filter((item) => item.type === "loan").length,
       },
       unpaid: {
-        bills: parseInt(unpaid.rows[0].unpaid_bills),
-        loans: parseInt(unpaid.rows[0].unpaid_loans),
-        bills_amount: parseFloat(unpaid.rows[0].unpaid_bills_amount),
-        loans_amount: parseFloat(unpaid.rows[0].unpaid_loans_amount),
+        bills: rows.filter(
+          (item) => item.type === "bill" && item.status === "unpaid",
+        ).length,
+        loans: rows.filter(
+          (item) => item.type === "loan" && item.status === "unpaid",
+        ).length,
+        bills_amount: unpaidBills,
+        loans_amount: unpaidLoans,
       },
     });
   } catch (error) {
@@ -398,5 +530,10 @@ router.get("/analytics/summary", auth, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch bills summary" });
   }
 });
+
+/**
+ * @route   DELETE /api/bills/reset (REMOVED - no longer needed)
+ * We don't reset anymore, we just filter by month!
+ */
 
 module.exports = router;

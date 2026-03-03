@@ -3,6 +3,32 @@ const router = express.Router();
 const db = require("../database/db");
 const auth = require("../middleware/auth");
 
+const getMonthFromDate = (dateString) => {
+  if (!dateString) {
+    console.error("❌ getMonthFromDate received null/undefined date");
+    return null;
+  }
+
+  try {
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.error("❌ Invalid date string:", dateString);
+      return null;
+    }
+
+    // Use UTC methods to avoid timezone issues
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+
+    return `${year}-${month}-01`;
+  } catch (e) {
+    console.error("❌ Error in getMonthFromDate:", e);
+    return null;
+  }
+};
+
 // ============================================
 // LOAN ROUTES - SPECIFIC TO LOANS ONLY
 // ============================================
@@ -113,58 +139,75 @@ router.get("/:id", auth, async (req, res) => {
 router.post("/", auth, async (req, res) => {
   try {
     const userId = req.userId;
+    console.log("Creating bill/loan with data:", req.body);
     const {
+      type,
       name,
       amount,
       category,
       due_date,
       recurrence = "monthly",
-      totalLoanAmount,
-      interestRate,
-      termMonths,
-      remainingBalance,
-      provider,
-      accountNumber,
+      status = "unpaid",
+      total_loan_amount,
+      interest_rate,
+      term_months,
+      remaining_balance,
     } = req.body;
 
     // Validation
-    if (!name || !amount || !due_date) {
+    if (!type || !name || !amount || !due_date) {
       return res.status(400).json({
-        error: "Missing required fields. Need: name, amount, dueDate",
+        error: "Missing required fields. Need: type, name, amount, dueDate",
       });
+    }
+
+    if (type !== "bill" && type !== "loan") {
+      return res.status(400).json({ error: 'Type must be "bill" or "loan"' });
     }
 
     if (amount <= 0) {
       return res.status(400).json({ error: "Amount must be greater than 0" });
     }
 
+    // Calculate month from due_date
+    const month = getMonthFromDate(due_date);
+    console.log("📅 Calculated month from due_date:", month);
+
+    // Validate month was calculated correctly
+    if (!month) {
+      return res.status(400).json({
+        error: "Could not calculate month from due_date",
+        due_date,
+      });
+    }
+
     const result = await db.query(
       `INSERT INTO bills_loans 
-             (user_id, type, name, amount, category, due_date, recurrence, status,
-              total_loan_amount, interest_rate, term_months, remaining_balance,
-              provider, account_number) 
-             VALUES ($1, 'loan', $2, $3, $4, $5, $6, 'unpaid', $7, $8, $9, $10, $11, $12) 
-             RETURNING *`,
+       (user_id, type, name, amount, category, due_date, month, recurrence, status,
+        total_loan_amount, interest_rate, term_months, remaining_balance) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+       RETURNING *`,
       [
         userId,
+        type,
         name,
         amount,
         category || null,
         due_date,
+        month,
         recurrence,
-        totalLoanAmount || amount,
-        interestRate || null,
-        termMonths || null,
-        remainingBalance || amount,
-        provider || null,
-        accountNumber || null,
+        status,
+        total_loan_amount || null,
+        interest_rate || null,
+        term_months || null,
+        remaining_balance || null,
       ],
     );
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error("Error creating loan:", error);
-    res.status(500).json({ error: "Failed to create loan" });
+    console.error("Error creating bill/loan:", error);
+    res.status(500).json({ error: "Failed to create bill/loan" });
   }
 });
 

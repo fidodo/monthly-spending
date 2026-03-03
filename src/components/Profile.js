@@ -27,7 +27,7 @@ const Profile = ({ user, monthlyEarning }) => {
                   <Card.Body>
                     <Card.Title>Monthly Budget</Card.Title>
                     <h3 className="text-primary">
-                      £{monthlyEarning.toFixed(2)}
+                      €{monthlyEarning.toFixed(2)}
                     </h3>
                   </Card.Body>
                 </Card>

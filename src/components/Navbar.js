@@ -89,6 +89,17 @@ const CustomNavbar = ({ user, onLogout }) => {
               <FaChartPie className="me-1" />
               Analytics
             </Nav.Link>
+            <Nav.Link
+              as={NavLink}
+              to="/archive"
+              className={({ isActive }) =>
+                isActive ? "active-nav-link fw-bold" : ""
+              }
+              style={({ isActive }) => (isActive ? activeStyle : {})}
+            >
+              <FaFileInvoiceDollar className="me-1" />
+              Archive
+            </Nav.Link>
           </Nav>
 
           <Nav className="align-items-center">

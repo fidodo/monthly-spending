@@ -29,6 +29,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -50,19 +51,60 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
     provider: "",
     accountNumber: "",
   });
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [billsRes, loansRes] = await Promise.all([
+        billsAPI.getAll(),
+        loansAPI.getAll(),
+      ]);
 
-  // ✅ Update local state when props change (for viewing)
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth() + 1;
+
+      // Filter and add unique keys
+      const validBills = (billsRes.data || [])
+        .filter((b) => {
+          const billDate = new Date(b.due_date || b.month);
+          return (
+            billDate.getFullYear() === currentYear &&
+            billDate.getMonth() + 1 === currentMonth &&
+            b.type === "bill"
+          );
+        })
+        .map((b) => ({
+          ...b,
+          type: "bill",
+          uniqueKey: `bill-${b.id}`, // ← UNIQUE KEY
+        }));
+
+      const validLoans = (loansRes.data || [])
+        .filter((l) => {
+          const loanDate = new Date(l.due_date || l.month);
+          return (
+            loanDate.getFullYear() === currentYear &&
+            loanDate.getMonth() + 1 === currentMonth &&
+            l.type === "loan"
+          );
+        })
+        .map((l) => ({
+          ...l,
+          type: "loan",
+          uniqueKey: `loan-${l.id}`, // ← UNIQUE KEY
+        }));
+
+      setItems([...validBills, ...validLoans]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Load data on mount and when props change
   useEffect(() => {
-    const validBills = (propBills || []).filter((b) => b.type === "bill");
-
-    const validLoans = (propLoans || []).filter((l) => l.type === "loan");
-
-    const combined = [
-      ...validBills.map((b) => ({ ...b, type: "bill" })),
-      ...validLoans.map((l) => ({ ...l, type: "loan" })),
-    ];
-
-    setItems(combined);
+    fetchData();
   }, [propBills, propLoans]);
 
   // Filter items by type
@@ -134,9 +176,8 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
     e.preventDefault();
 
     try {
-      let response;
       if (formData.type === "bill") {
-        response = await billsAPI.create({
+        await billsAPI.create({
           type: formData.type,
           name: formData.name,
           amount: parseFloat(formData.amount),
@@ -145,32 +186,32 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
           recurrence: formData.recurrence,
         });
       } else {
-        response = await loansAPI.create({
+        await loansAPI.create({
+          type: formData.type,
           name: formData.name,
           amount: parseFloat(formData.amount),
           category: formData.category || null,
           due_date: formData.due_date,
           recurrence: formData.recurrence,
-          totalLoanAmount: formData.totalLoanAmount
+          total_loan_amount: formData.totalLoanAmount
             ? parseFloat(formData.totalLoanAmount)
             : null,
-          interestRate: formData.interestRate
+          interest_rate: formData.interestRate
             ? parseFloat(formData.interestRate)
             : null,
-          termMonths: formData.termMonths
+          term_months: formData.termMonths
             ? parseInt(formData.termMonths)
             : null,
-          remainingBalance: formData.remainingBalance
+          remaining_balance: formData.remainingBalance
             ? parseFloat(formData.remainingBalance)
             : null,
-          provider: null, // Loans don't need provider
-          accountNumber: null,
+          provider: formData.provider,
+          account_number: formData.accountNumber,
         });
       }
 
-      // Add to local state
-      const newItem = { ...response.data, type: formData.type };
-      setItems([...items, newItem]);
+      // Refresh data after successful creation
+      await fetchData();
 
       resetForm();
       setShowModal(false);
@@ -184,9 +225,8 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
   // ✅ UPDATE - Edit bill/loan
   const handleUpdate = async () => {
     try {
-      let response;
       if (formData.type === "bill") {
-        response = await billsAPI.update(editingId, {
+        await billsAPI.update(editingId, {
           name: formData.name,
           amount: parseFloat(formData.amount),
           category: formData.category,
@@ -194,7 +234,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
           recurrence: formData.recurrence,
         });
       } else {
-        response = await loansAPI.update(editingId, {
+        await loansAPI.update(editingId, {
           name: formData.name,
           amount: parseFloat(formData.amount),
           category: formData.category,
@@ -203,14 +243,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
         });
       }
 
-      // Update local state
-      setItems(
-        items.map((item) =>
-          item.id === editingId
-            ? { ...response.data, type: formData.type }
-            : item,
-        ),
-      );
+      await fetchData();
 
       resetForm();
       setShowModal(false);
@@ -231,8 +264,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
         await loansAPI.delete(id);
       }
 
-      // Remove from local state
-      setItems(items.filter((item) => item.id !== id));
+      await fetchData();
     } catch (error) {
       console.error("Error deleting item:", error);
       alert("Failed to delete. Please try again.");
@@ -248,14 +280,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
         await loansAPI.markPaid(id);
       }
 
-      // Update local state
-      setItems(
-        items.map((item) =>
-          item.id === id
-            ? { ...item, status: "paid", lastPaid: new Date().toISOString() }
-            : item,
-        ),
-      );
+      await fetchData();
     } catch (error) {
       console.error("Error marking as paid:", error);
       alert("Failed to mark as paid. Please try again.");
@@ -271,12 +296,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
         await loansAPI.markUnpaid(id);
       }
 
-      // Update local state
-      setItems(
-        items.map((item) =>
-          item.id === id ? { ...item, status: "unpaid", lastPaid: null } : item,
-        ),
-      );
+      await fetchData();
     } catch (error) {
       console.error("Error marking as unpaid:", error);
       alert("Failed to mark as unpaid. Please try again.");
@@ -407,6 +427,13 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
         </Col>
       </Row>
 
+      {/* Loading indicator */}
+      {loading && (
+        <Alert variant="info" className="text-center">
+          Loading...
+        </Alert>
+      )}
+
       {/* Upcoming payments alert */}
       {upcomingItems.length > 0 && (
         <Alert variant="warning" className="mb-4">
@@ -422,7 +449,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
           <Card className="text-center">
             <Card.Body>
               <Card.Title>Total Bills</Card.Title>
-              <h3 className="text-primary">£{totalBills.toFixed(2)}</h3>
+              <h3 className="text-primary">€{totalBills.toFixed(2)}</h3>
               <small className="text-muted">
                 {recurringBills.length} bills
               </small>
@@ -433,7 +460,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
           <Card className="text-center">
             <Card.Body>
               <Card.Title>Total Loans</Card.Title>
-              <h3 className="text-warning">£{totalLoans.toFixed(2)}</h3>
+              <h3 className="text-warning">€{totalLoans.toFixed(2)}</h3>
               <small className="text-muted">{loans.length} loans</small>
             </Card.Body>
           </Card>
@@ -495,7 +522,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                           !isPaid && new Date(bill.due_date) < new Date();
                         return (
                           <tr
-                            key={bill.id}
+                            key={bill.uniqueKey}
                             className={
                               isPaid
                                 ? "table-success"
@@ -509,7 +536,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                               <strong>{bill.name}</strong>
                             </td>
                             <td className="fw-bold">
-                              £{getSafeAmount(bill.amount).toFixed(2)}
+                              €{getSafeAmount(bill.amount).toFixed(2)}
                             </td>
                             <td>
                               {new Date(bill.due_date).toLocaleDateString(
@@ -611,7 +638,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                           !isPaid && new Date(loan.due_date) < new Date();
                         return (
                           <tr
-                            key={loan.id}
+                            key={loan.uniqueKey}
                             className={
                               isPaid
                                 ? "table-success"
@@ -625,7 +652,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                               <strong>{loan.name}</strong>
                             </td>
                             <td className="fw-bold">
-                              £{getSafeAmount(loan.amount).toFixed(2)}
+                              €{getSafeAmount(loan.amount).toFixed(2)}
                             </td>
                             <td>
                               {new Date(loan.due_date).toLocaleDateString(
@@ -722,7 +749,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                     .slice(0, 5)
                     .map((payment, index) => (
                       <ListGroup.Item
-                        key={index}
+                        key={`payment-${index}`}
                         className="d-flex justify-content-between"
                       >
                         <div>
@@ -734,7 +761,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                           </small>
                         </div>
                         <div className="text-danger fw-bold">
-                          £{getSafeAmount(payment.amount).toFixed(2)}
+                          €{getSafeAmount(payment.amount).toFixed(2)}
                         </div>
                       </ListGroup.Item>
                     ))}
@@ -798,7 +825,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Amount (£) *</Form.Label>
+                    <Form.Label>Amount (€) *</Form.Label>
                     <Form.Control
                       type="number"
                       step="0.01"
@@ -942,7 +969,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Monthly Payment (£) *</Form.Label>
+                    <Form.Label>Monthly Payment (€) *</Form.Label>
                     <Form.Control
                       type="number"
                       step="0.01"
@@ -975,7 +1002,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Total Loan Amount (£)</Form.Label>
+                    <Form.Label>Total Loan Amount (€)</Form.Label>
                     <Form.Control
                       type="number"
                       step="0.01"
@@ -1028,7 +1055,7 @@ const BillsLoans = ({ spending, bills: propBills, loans: propLoans }) => {
                 </Col>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Remaining Balance (£)</Form.Label>
+                    <Form.Label>Remaining Balance (€)</Form.Label>
                     <Form.Control
                       type="number"
                       step="0.01"

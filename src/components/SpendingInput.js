@@ -79,13 +79,13 @@ const SpendingInput = ({ onAddSpending, monthlyEarning, totalSpent }) => {
             {warningPercentage >= 80 && (
               <Alert variant="warning">
                 ⚠️ You've spent {warningPercentage.toFixed(1)}% of your monthly
-                earning. Remaining: £{remaining.toFixed(2)}
+                earning. Remaining: €{remaining.toFixed(2)}
               </Alert>
             )}
 
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
-                <Form.Label>Amount (£)</Form.Label>
+                <Form.Label>Amount (€)</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"

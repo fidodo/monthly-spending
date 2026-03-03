@@ -27,6 +27,7 @@ const Dashboard = ({
   const [showModal, setShowModal] = useState(false);
   const [newEarning, setNewEarning] = useState(monthlyEarning);
   const [isRecentSpending, setIsRecentSpending] = useState(false);
+  console.log(monthlyEarning, "monthly earning in dashboard");
 
   const handleSaveEarning = () => {
     onUpdateEarning(parseFloat(newEarning) || 0);
@@ -37,7 +38,7 @@ const Dashboard = ({
     (sum, bill) => sum + Number(bill.amount),
     0,
   );
-
+  console.log(amountOfBillsandLoans, "total amount of bills and loans");
   const totalSpending = totalSpent + amountOfBillsandLoans;
   const remaining = monthlyEarning - totalSpending;
   const percentage =
@@ -109,7 +110,7 @@ const Dashboard = ({
               <th>Date</th>
               <th>Category</th>
               <th>Description</th>
-              <th class="amount">Amount (£)</th>
+              <th class="amount">Amount (€)</th>
             </tr>
           </thead>
           <tbody>
@@ -132,7 +133,7 @@ const Dashboard = ({
                     <td>${itemDate}</td>
                     <td>${category}</td>
                     <td>${item.description || item.name || "No description"}</td>
-                    <td class="amount">£${typeof amount === "number" ? amount.toFixed(2) : "0.00"}</td>
+                    <td class="amount">€${typeof amount === "number" ? amount.toFixed(2) : "0.00"}</td>
                   </tr>
                 `;
               })
@@ -141,7 +142,7 @@ const Dashboard = ({
           <tfoot>
             <tr class="total">
               <td colspan="3"><strong>Total Spending</strong></td>
-              <td class="amount"><strong>£${totalAmount.toFixed(2)}</strong></td>
+              <td class="amount"><strong>€${totalAmount.toFixed(2)}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -151,7 +152,7 @@ const Dashboard = ({
           <p><strong>Summary:</strong></p>
           <ul>
             <li>Total Items: ${dataToPrint.length}</li>
-            <li>Average per Item: £${(totalAmount / dataToPrint.length).toFixed(2)}</li>
+            <li>Average per Item: €${(totalAmount / dataToPrint.length).toFixed(2)}</li>
             <li>Report Type: ${isRecentSpending ? "Recent Spending" : "All Spending"}</li>
           </ul>
         </div>
@@ -199,7 +200,7 @@ const Dashboard = ({
             <Card.Body className="d-flex flex-column justify-content-center">
               <Card.Title>Remaining</Card.Title>
               <h2 className={remaining >= 0 ? "text-success" : "text-danger"}>
-                £{remaining.toFixed(2)}
+                €{remaining.toFixed(2)}
               </h2>
               <p className="text-muted">
                 {remaining >= 0 ? "Available to spend" : "Over budget"}
@@ -217,7 +218,7 @@ const Dashboard = ({
                 <Card.Body>
                   <Card.Title>Monthly Earning</Card.Title>
                   <h2 className="text-primary">
-                    £
+                    €
                     {typeof monthlyEarning === "number"
                       ? monthlyEarning.toFixed(2)
                       : "0.00"}
@@ -241,7 +242,7 @@ const Dashboard = ({
                 <Card.Body>
                   <Card.Title>Total Spent</Card.Title>
                   <h2 className="text-danger">
-                    £
+                    €
                     {typeof totalSpent === "number"
                       ? totalSpent.toFixed(2)
                       : "0.00"}
@@ -275,7 +276,7 @@ const Dashboard = ({
                 Total Spending (Bills & Loans Included)
               </Card.Title>
               <h2 className="text-warning display-6">
-                £
+                €
                 {typeof totalSpending === "number"
                   ? totalSpending.toFixed(2)
                   : "0.00"}
@@ -369,7 +370,7 @@ const Dashboard = ({
                                   : "text-danger"
                             }
                           >
-                            £
+                            €
                             {typeof item.amount === "number"
                               ? item.amount.toFixed(2)
                               : parseFloat(item.amount).toFixed(2)}
@@ -392,7 +393,7 @@ const Dashboard = ({
                       <ListGroup.Item className="d-flex justify-content-between bg-light">
                         <strong>Total:</strong>
                         <strong>
-                          £
+                          €
                           {allSpending
                             .reduce((sum, item) => {
                               const amount =
@@ -429,7 +430,7 @@ const Dashboard = ({
                             </small>
                           </div>
                           <div className="text-danger fw-bold mx-2">
-                            £{Number(item.amount).toFixed(2)}
+                            €{Number(item.amount).toFixed(2)}
                             <Button
                               variant="outline-danger"
                               size="sm"
@@ -479,7 +480,7 @@ const Dashboard = ({
         </Modal.Header>
         <Modal.Body>
           <Form.Group>
-            <Form.Label>Monthly Earning Amount (£)</Form.Label>
+            <Form.Label>Monthly Earning Amount (€)</Form.Label>
             <Form.Control
               type="number"
               value={newEarning}

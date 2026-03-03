@@ -166,7 +166,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                     <td>${item.date}</td>
                     <td>${item.description}</td>
                     <td>${item.category}</td>
-                    <td class="amount">£${item.amount.toFixed(2)}</td>
+                    <td class="amount">€${item.amount.toFixed(2)}</td>
                   </tr>
                 `,
                 )
@@ -175,7 +175,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
             <tfoot>
               <tr class="total">
                 <td colspan="3"><strong>Total Spending</strong></td>
-                <td class="amount">£${totalSpent.toFixed(2)}</td>
+                <td class="amount">€${totalSpent.toFixed(2)}</td>
               </tr>
             </tfoot>
           </table>
@@ -205,10 +205,10 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
               <Card.Title>Spending excluding loans and bills</Card.Title>
               <div className="text-center mb-3">
                 <h3 className="text-primary">
-                  £{typeof totalSpent === "number" && totalSpent.toFixed(2)}
+                  €{typeof totalSpent === "number" && totalSpent.toFixed(2)}
                 </h3>
                 <p className="text-muted">
-                  of £
+                  of €
                   {typeof monthlyEarning === "number" &&
                     monthlyEarning.toFixed(2)}{" "}
                   monthly earning
@@ -226,12 +226,12 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
               <Card.Title>Spending Including loans and bills </Card.Title>
               <div className="text-center mb-3">
                 <h3 className="text-warning">
-                  £
+                  €
                   {typeof totalSpending === "number" &&
                     totalSpending.toFixed(2)}
                 </h3>
                 <p className="text-muted">
-                  of £
+                  of €
                   {typeof monthlyEarning === "number" &&
                     monthlyEarning.toFixed(2)}{" "}
                   monthly earning
@@ -355,7 +355,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                                     </td>
                                     <td className="text-end pe-0">
                                       <span className="fw-bold text-primary d-block">
-                                        £{Number(amount).toFixed(2)}
+                                        €{Number(amount).toFixed(2)}
                                       </span>
                                       <small className="text-muted">
                                         {((amount / totalSpent) * 100).toFixed(
@@ -466,7 +466,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                                     </td>
                                     <td className="text-end pe-0">
                                       <span className="fw-bold text-primary d-block">
-                                        £{Number(amount).toFixed(2)}
+                                        €{Number(amount).toFixed(2)}
                                       </span>
                                       <small className="text-muted">
                                         {(
@@ -531,7 +531,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                           <span className="badge bg-info">{item.category}</span>
                         </td>
                         <td className="text-danger">
-                          £{Number(item.amount).toFixed(2)}
+                          €{Number(item.amount).toFixed(2)}
                         </td>
                         <td>
                           <Button

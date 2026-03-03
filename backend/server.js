@@ -8,6 +8,7 @@ const billsRoutes = require("./routes/bills");
 const loansRoutes = require("./routes/loans");
 const spendingRoutes = require("./routes/spending");
 const earningRoutes = require("./routes/earnings");
+const ArchiveRoutes = require("./routes/archive");
 const app = express();
 
 app.use(cors());
@@ -27,6 +28,7 @@ app.use("/api/bills", billsRoutes);
 app.use("/api/loans", loansRoutes);
 app.use("/api/spending", spendingRoutes);
 app.use("/api/earnings", earningRoutes);
+app.use("/api/archive", ArchiveRoutes);
 
 app.get("/", (req, res) => {
   res.json({

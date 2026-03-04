@@ -26,7 +26,6 @@ function App() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Check if user is logged in from localStorage on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
@@ -39,9 +38,6 @@ function App() {
     }
   }, []);
 
-  // ✅ NEW: Fetch all user data from backend
-
-  // ✅ FIXED: Handle login - now fetches data after successful login
   const handleLogin = async (userData, token) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
@@ -49,7 +45,6 @@ function App() {
       localStorage.setItem("token", token);
     }
 
-    // Fetch all data immediately after login
     await fetchAllUserData();
   };
 

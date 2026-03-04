@@ -35,6 +35,11 @@ const SpendingInput = ({ onAddSpending, monthlyEarning, totalSpent }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (typeof monthlyEarning === "undefined") {
+      alert("Please set your monthly earning before adding spending.");
+      return;
+    }
+
     if (formData.amount && formData.description) {
       const newEntry = {
         ...formData,
@@ -83,69 +88,77 @@ const SpendingInput = ({ onAddSpending, monthlyEarning, totalSpent }) => {
               </Alert>
             )}
 
-            <Form onSubmit={handleSubmit}>
-              <Form.Group className="mb-3">
-                <Form.Label>Amount (€)</Form.Label>
-                <Form.Control
-                  type="number"
-                  step="0.01"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  placeholder="Enter amount"
-                  required
-                />
-              </Form.Group>
+            {typeof monthlyEarning === "undefined" && (
+              <Alert variant="info">
+                Please set your monthly earning before adding spending.
+              </Alert>
+            )}
 
-              <Form.Group className="mb-3">
-                <Form.Label>Description</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="What did you spend on?"
-                  required
-                />
-              </Form.Group>
+            {monthlyEarning > 0 && (
+              <Form onSubmit={handleSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Amount (€)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    placeholder="Enter amount"
+                    required
+                  />
+                </Form.Group>
 
-              <Row className="mb-3">
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Category</Form.Label>
-                    <Form.Select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group>
-                    <Form.Label>Date</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+                <Form.Group className="mb-3">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="What did you spend on?"
+                    required
+                  />
+                </Form.Group>
 
-              <div className="d-grid gap-2">
-                <Button variant="primary" type="submit" size="lg">
-                  Add Spending
-                </Button>
-              </div>
-            </Form>
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Category</Form.Label>
+                      <Form.Select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleChange}
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Date</Form.Label>
+                      <Form.Control
+                        type="date"
+                        name="date"
+                        value={formData.date}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <div className="d-grid gap-2">
+                  <Button variant="primary" type="submit" size="lg">
+                    Add Spending
+                  </Button>
+                </div>
+              </Form>
+            )}
           </Card.Body>
         </Card>
       </Col>

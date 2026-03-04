@@ -230,6 +230,9 @@ const Dashboard = ({
                   >
                     Update
                   </Button>
+                  <p className="text-muted mt-2">
+                    Add Your estimated monthly earning
+                  </p>
                 </Card.Body>
               </Card>
             </Col>

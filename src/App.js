@@ -17,6 +17,7 @@ import Profile from "./components/Profile";
 import BillsLoans from "./components/BillsLoans";
 import { spendingAPI, earningsAPI, billsAPI, loansAPI } from "./services/api";
 import MonthBreakdown from "./components/MonthBreakdown";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -251,6 +252,9 @@ function App() {
             />
           </Routes>
         </Container>
+
+        <div className="mobile-nav-spacer d-lg-none"></div>
+        {user && <MobileBottomNav />}
       </div>
     </Router>
   );

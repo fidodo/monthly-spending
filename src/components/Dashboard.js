@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { FaMoneyBill, FaMoneyCheck, FaPrint, FaTrash } from "react-icons/fa";
 import { getBillsAndLoansAsSpending } from "../helper/getBillsAndLoansAsSpending";
+import { formatDate } from "../helper/formatDate";
 
 const Dashboard = ({
   monthlyEarning,
@@ -94,15 +95,7 @@ const Dashboard = ({
       <body>
         <h1>Monthly Spending Report</h1>
         <h2>${isRecentSpending ? "Recent Spending" : "All Spending (Including Bills & Loans)"}</h2>
-        <p><strong>Report Date:</strong> ${new Date().toLocaleDateString(
-          "en-GB",
-          {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          },
-        )}</p>
+        <p><strong>Report Date:</strong> ${formatDate(new Date())}</p>
         <p><strong>Items:</strong> ${dataToPrint.length}</p>
         <table>
           <thead>
@@ -122,6 +115,7 @@ const Dashboard = ({
                 }
 
                 const itemDate = item.date || item.due_date || "N/A";
+                const formattedItemDate = formatDate(itemDate);
 
                 let category = item.category || "";
                 if (!category && item.type) {
@@ -130,7 +124,7 @@ const Dashboard = ({
 
                 return `
                   <tr>
-                    <td>${itemDate}</td>
+                    <td>${formattedItemDate}</td>
                     <td>${category}</td>
                     <td>${item.description || item.name || "No description"}</td>
                     <td class="amount">€${typeof amount === "number" ? amount.toFixed(2) : "0.00"}</td>

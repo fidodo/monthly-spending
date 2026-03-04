@@ -114,6 +114,13 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
     topCategoriesWithBillsAndLoans,
   );
 
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  const formattedDate = `${year}/${month}/${day}`;
+
   const handleSpendingPrint = () => {
     if (!spending || spending.length === 0) {
       alert("No spending data to print!");
@@ -139,15 +146,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
         </head>
         <body>
           <h1>Spending Report</h1>
-          <p><strong>Report Date:</strong> ${new Date().toLocaleDateString(
-            "en-GB",
-            {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            },
-          )}</p>
+          <p><strong>Report Date:</strong> ${formattedDate}</p>
           <table>
             <thead>
               <tr>
@@ -166,7 +165,7 @@ const Analytics = ({ spending, monthlyEarning, bills, totalSpent }) => {
                     <td>${item.date}</td>
                     <td>${item.description}</td>
                     <td>${item.category}</td>
-                    <td class="amount">€${item.amount.toFixed(2)}</td>
+                    <td class="amount">€${typeof item.amount === "string" ? parseFloat(item.amount) : item.amount.toFixed(2)}</td>
                   </tr>
                 `,
                 )
